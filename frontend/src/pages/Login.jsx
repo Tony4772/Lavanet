@@ -61,8 +61,10 @@ export default function Login() {
       <div className="flex-1 min-h-0 grid lg:grid-cols-2">
       <div className="hidden lg:flex relative bg-black items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-brand-dark/40" />
-        <div className="relative z-10 px-12 max-w-lg text-center">
-          <BrandLogo size="heroWide" className="mb-8 mx-auto" />
+        <div className="relative z-10 px-12 max-w-lg w-full text-center">
+          <div className="mb-8 flex justify-center">
+            <BrandLogo size="heroWide" />
+          </div>
           <h1 className="text-white font-heading text-4xl xl:text-5xl font-extrabold leading-tight tracking-tight">
             La gestión de tu lavandería,
             <br />
