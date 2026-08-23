@@ -5,6 +5,7 @@ import { User, Lock, ArrowRight, Play, MessageCircle } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { api, hasApiBackend } from "../lib/api";
 import BrandLogo from "../components/BrandLogo";
+import SiteFooter from "../components/SiteFooter";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
@@ -25,8 +26,10 @@ export default function Login() {
     try {
       const res = await login(username, password);
       if (res.ok) {
-        toast.success("Bienvenido/a de vuelta");
-        navigate(res.superadmin ? "/superadmin" : "/");
+        toast.success(res.subscriptionBlocked ? "Regulariza tu suscripción para continuar" : "Bienvenido/a de vuelta");
+        if (res.superadmin) navigate("/superadmin");
+        else if (res.subscriptionBlocked) navigate("/configuracion?tab=subscription");
+        else navigate("/");
       } else {
         toast.error(res.error);
       }
@@ -54,11 +57,12 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-slate-50">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="flex-1 grid lg:grid-cols-2">
       <div className="hidden lg:flex relative bg-black items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-brand-dark/40" />
         <div className="relative z-10 px-12 max-w-lg text-center">
-          <BrandLogo imgClassName="h-28 mx-auto" className="mb-10" />
+          <BrandLogo size="heroDesktop" className="mb-10 mx-auto" />
           <h1 className="text-white font-heading text-4xl xl:text-5xl font-extrabold leading-tight tracking-tight">
             La gestión de tu lavandería,
             <br />
@@ -72,8 +76,8 @@ export default function Login() {
 
       <div className="flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md">
-          <div className="lg:hidden mb-8">
-            <BrandLogo framed imgClassName="h-14" />
+          <div className="lg:hidden mb-8 flex justify-center">
+            <BrandLogo size="hero" />
           </div>
 
           <h2 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">
@@ -149,6 +153,9 @@ export default function Login() {
           </div>
         </div>
       </div>
+      </div>
+
+      <SiteFooter />
     </div>
   );
 }

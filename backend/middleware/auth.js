@@ -116,6 +116,13 @@ exports.requireActiveSubscription = async (req, res, next) => {
       req.tenantDoc = tenant;
       return next();
     }
+    if (tenant.status === "inactive") {
+      return res.status(403).json({
+        status: "fail",
+        code: "TENANT_PAUSED",
+        message: "Cuenta pausada. Contacta WhatsApp 906 591 037",
+      });
+    }
     if (tenant.billingStatus === "suspended" || tenant.status === "suspended") {
       return res.status(402).json({
         status: "fail",

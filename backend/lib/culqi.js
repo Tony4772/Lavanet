@@ -44,4 +44,10 @@ exports.createCharge = (payload) =>
     body: JSON.stringify(payload),
   });
 
+exports.createOrder = (payload) =>
+  culqiRequest("/orders", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+
 exports.getPublicKey = () => process.env.CULQI_PUBLIC_KEY || "";

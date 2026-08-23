@@ -44,6 +44,7 @@ app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/superadmin", require("./routes/superadmin"));
+app.use("/api/billing", require("./routes/billing"));
 
 mountTenantRoutes(app, "/api/users", require("./routes/users"));
 mountTenantRoutes(app, "/api/customers", require("./routes/customers"));

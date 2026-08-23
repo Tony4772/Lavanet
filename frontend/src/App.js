@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
 import { useApp, canAccess } from "./context/AppContext";
 import AppLayout from "./components/AppLayout";
@@ -18,6 +18,9 @@ import Reportes from "./pages/Reportes";
 import Usuarios from "./pages/Usuarios";
 import Configuracion from "./pages/Configuracion";
 import ModoTurno from "./pages/ModoTurno";
+import Terminos from "./pages/legal/Terminos";
+import PoliticaPrivacidad from "./pages/legal/PoliticaPrivacidad";
+import CookieConsent from "./components/CookieConsent";
 
 const RequireAuth = () => {
   const { currentUser } = useApp();
@@ -29,6 +32,18 @@ const RequireSuperadmin = () => {
   const { currentUser } = useApp();
   if (currentUser?.rawRole !== "superadmin" && currentUser?.role !== "Superadmin") {
     return <Navigate to="/" replace />;
+  }
+  return <Outlet />;
+};
+
+const RequireActiveSubscription = () => {
+  const { currentUser } = useApp();
+  const location = useLocation();
+  if (
+    currentUser?.subscriptionBlocked &&
+    !location.pathname.startsWith("/configuracion")
+  ) {
+    return <Navigate to="/configuracion?tab=subscription" replace />;
   }
   return <Outlet />;
 };
@@ -55,12 +70,15 @@ function AppRoutes() {
         path="/login"
         element={currentUser ? <HomeRedirect /> : <Login />}
       />
+      <Route path="/terminos" element={<Terminos />} />
+      <Route path="/privacidad" element={<PoliticaPrivacidad />} />
       <Route path="/register" element={<Navigate to="/login" replace />} />
       <Route element={<RequireAuth />}>
         <Route element={<RequireSuperadmin />}>
           <Route path="/superadmin" element={<SuperAdmin />} />
         </Route>
         <Route element={<AppLayout />}>
+          <Route element={<RequireActiveSubscription />}>
           <Route element={<RequireRole path="/" />}>
             <Route path="/" element={<Dashboard />} />
           </Route>
@@ -100,6 +118,7 @@ function AppRoutes() {
           <Route element={<RequireRole path="/configuracion" />}>
             <Route path="/configuracion" element={<Configuracion />} />
           </Route>
+          </Route>
         </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -111,6 +130,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppRoutes />
+      <CookieConsent />
       <Toaster
         position="bottom-right"
         richColors

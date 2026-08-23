@@ -106,11 +106,10 @@ router.post("/login", loginLimiter, async (req, res) => {
     if (user.role !== "superadmin" && user.tenant) {
       const tenant = await Tenant.findById(user.tenant);
       if (tenant) {
-        if (!tenant.isDemo && tenant.billingStatus === "suspended") {
-          return res.status(402).json({
+        if (tenant.status === "inactive") {
+          return res.status(403).json({
             status: "fail",
-            code: "SUBSCRIPTION_SUSPENDED",
-            message: "Suscripción suspendida. WhatsApp 906 591 037",
+            message: "Cuenta pausada. Contacta WhatsApp 906 591 037",
           });
         }
         tenantInfo = {
@@ -118,6 +117,7 @@ router.post("/login", loginLimiter, async (req, res) => {
           name: tenant.name,
           isDemo: tenant.isDemo,
           billing: billing.getBillingSnapshot(tenant),
+          subscriptionBlocked: !tenant.isDemo && tenant.billingStatus === "suspended",
         };
       }
     }

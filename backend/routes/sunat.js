@@ -48,55 +48,19 @@ router.get("/status", protect, verifyTenant, authorize("admin"), async (req, res
   }
 });
 
-router.put("/config", protect, verifyTenant, authorize("admin"), async (req, res) => {
-  try {
-    const tenant = await Tenant.findById(req.tenantId).select("+sunat.solPass +sunat.certificatePassword +sunat.certificateP12");
-    if (!tenant) return res.status(404).json({ message: "Tenant no encontrado" });
-
-    const body = req.body || {};
-    const sunatCfg = tenant.sunat || {};
-    sunatCfg.enabled = body.enabled !== undefined ? !!body.enabled : sunatCfg.enabled;
-    if (body.ruc !== undefined) sunatCfg.ruc = String(body.ruc).replace(/\D/g, "");
-    if (body.businessName !== undefined) sunatCfg.businessName = body.businessName;
-    if (body.address !== undefined) sunatCfg.address = body.address;
-    if (body.ubigeo !== undefined) sunatCfg.ubigeo = body.ubigeo;
-    if (body.solUser !== undefined) sunatCfg.solUser = body.solUser;
-    if (body.solPass) sunatCfg.solPass = body.solPass;
-    if (body.certificatePassword !== undefined) sunatCfg.certificatePassword = body.certificatePassword;
-    if (body.certificateP12) sunatCfg.certificateP12 = body.certificateP12;
-    if (body.environment) sunatCfg.environment = body.environment === "produccion" ? "produccion" : "beta";
-    if (body.seriesInvoice) sunatCfg.seriesInvoice = body.seriesInvoice.toUpperCase();
-    if (body.seriesBoleta) sunatCfg.seriesBoleta = body.seriesBoleta.toUpperCase();
-
-    tenant.sunat = sunatCfg;
-    tenant.markModified("sunat");
-    await tenant.save();
-
-    res.json({
-      status: "success",
-      data: {
-        enabled: sunatCfg.enabled,
-        ruc: sunatCfg.ruc,
-        environment: sunatCfg.environment,
-        hasCertificate: !!sunatCfg.certificateP12,
-      },
-    });
-  } catch (err) {
-    res.status(500).json({ status: "error", message: err.message });
-  }
+/** Los clientes no configuran SUNAT — solo el superadmin. */
+router.put("/config", protect, verifyTenant, authorize("admin"), (_req, res) => {
+  res.status(403).json({
+    status: "fail",
+    message: "La facturación SUNAT la activa el administrador de Lavanet. Contacta WhatsApp 906 591 037",
+  });
 });
 
-router.post("/test", protect, verifyTenant, authorize("admin"), async (req, res) => {
-  try {
-    const tenant = await Tenant.findById(req.tenantId).select("+sunat.solPass +sunat.certificatePassword +sunat.certificateP12");
-    if (!tenant?.sunat?.enabled) {
-      return res.status(400).json({ status: "fail", message: "Activa SUNAT en configuración primero" });
-    }
-    const result = await sunat.testConnection(tenantToCompany(tenant));
-    res.json({ status: "success", data: result });
-  } catch (err) {
-    res.status(400).json({ status: "fail", message: err.message });
-  }
+router.post("/test", protect, verifyTenant, authorize("admin"), (_req, res) => {
+  res.status(403).json({
+    status: "fail",
+    message: "Pruebas SUNAT solo desde el panel del dueño del sistema",
+  });
 });
 
 router.get("/", protect, verifyTenant, async (req, res) => {

@@ -1,9 +1,11 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Save, RefreshCw, Mail, Send, Clock, FileText, Upload } from "lucide-react";
+import { Save, RefreshCw, Mail, Send, Clock, FileText, CreditCard } from "lucide-react";
 import { useApp, fmtMoney, fmtDate } from "../context/AppContext";
 import { useTenant } from "../context/TenantContext";
 import { api, hasApiBackend } from "../lib/api";
+import SubscriptionPanel from "../components/SubscriptionPanel";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
@@ -11,31 +13,20 @@ import { Switch } from "../components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { PAYMENT_METHODS, ORDER_STATUSES } from "../lib/seed";
 import { STATUS_STYLE } from "../lib/seed";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 
 export default function Configuracion() {
-  const { data, setData, resetDemo } = useApp();
+  const { data, setData, resetDemo, currentUser } = useApp();
   const { tenantId } = useTenant();
+  const [searchParams] = useSearchParams();
+  const initialTab =
+    searchParams.get("tab") === "subscription" || currentUser?.subscriptionBlocked
+      ? "subscription"
+      : "business";
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [cfg, setCfg] = useState(data.config);
   const [schedule, setSchedule] = useState(data.reportSchedule || { enabled: false, email: "", lastSentAt: null, hourOfDay: 22 });
   const currency = data.config.business.currencySymbol;
-  const [sunat, setSunat] = useState({
-    enabled: false,
-    ruc: "",
-    businessName: "",
-    address: "",
-    ubigeo: "150101",
-    solUser: "",
-    solPass: "",
-    certificatePassword: "",
-    certificateP12: "",
-    environment: "beta",
-    seriesInvoice: "F001",
-    seriesBoleta: "B001",
-    hasCertificate: false,
-    configured: false,
-  });
-  const [sunatBusy, setSunatBusy] = useState(false);
+  const [sunat, setSunat] = useState({ enabled: false, configured: false, ruc: "", environment: "beta" });
 
   useEffect(() => {
     if (!hasApiBackend()) return;
@@ -43,75 +34,15 @@ export default function Configuracion() {
       .get("/api/sunat/status")
       .then(({ data: res }) => {
         const d = res?.data || {};
-        setSunat((s) => ({
-          ...s,
+        setSunat({
           enabled: !!d.enabled,
-          ruc: d.ruc || "",
-          businessName: d.businessName || "",
-          environment: d.environment || "beta",
-          seriesInvoice: d.seriesInvoice || "F001",
-          seriesBoleta: d.seriesBoleta || "B001",
-          hasCertificate: !!d.hasCertificate,
           configured: !!d.configured,
-        }));
+          ruc: d.ruc || "",
+          environment: d.environment || "beta",
+        });
       })
       .catch(() => {});
   }, []);
-
-  const onCertFile = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const b64 = String(reader.result || "").split(",").pop() || "";
-      setSunat((s) => ({ ...s, certificateP12: b64, hasCertificate: true }));
-      toast.success("Certificado .p12 cargado");
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const saveSunat = async () => {
-    if (!hasApiBackend()) {
-      toast.error("SUNAT requiere API en producción");
-      return;
-    }
-    setSunatBusy(true);
-    try {
-      await api.put("/api/sunat/config", {
-        enabled: sunat.enabled,
-        ruc: sunat.ruc,
-        businessName: sunat.businessName || cfg.business?.name,
-        address: sunat.address || cfg.business?.address,
-        ubigeo: sunat.ubigeo,
-        solUser: sunat.solUser,
-        solPass: sunat.solPass || undefined,
-        certificatePassword: sunat.certificatePassword,
-        certificateP12: sunat.certificateP12 || undefined,
-        environment: sunat.environment,
-        seriesInvoice: sunat.seriesInvoice,
-        seriesBoleta: sunat.seriesBoleta,
-      });
-      toast.success("Configuración SUNAT guardada");
-      setSunat((s) => ({ ...s, solPass: "", certificateP12: "" }));
-    } catch (err) {
-      toast.error(err?.response?.data?.message || "Error al guardar SUNAT");
-    } finally {
-      setSunatBusy(false);
-    }
-  };
-
-  const testSunat = async () => {
-    setSunatBusy(true);
-    try {
-      const { data: res } = await api.post("/api/sunat/test");
-      if (res?.data?.ok) toast.success(res.data.message || "Certificado OK");
-      else toast.error(res?.data?.message || "Revisa certificado/SOL");
-    } catch (err) {
-      toast.error(err?.response?.data?.message || "Error de prueba SUNAT");
-    } finally {
-      setSunatBusy(false);
-    }
-  };
 
   const todayReport = useMemo(() => {
     const key = new Date().toDateString();
@@ -176,8 +107,13 @@ export default function Configuracion() {
         </div>
       </div>
 
-      <Tabs defaultValue="business" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="bg-white border border-slate-200 p-1 h-auto flex-wrap justify-start">
+          {hasApiBackend() && (
+            <TabsTrigger value="subscription" data-testid="tab-subscription" className="gap-1.5">
+              <CreditCard className="w-3.5 h-3.5" /> Mi suscripción
+            </TabsTrigger>
+          )}
           <TabsTrigger value="business" data-testid="tab-business">Negocio</TabsTrigger>
           <TabsTrigger value="payments" data-testid="tab-payments">Métodos de pago</TabsTrigger>
           <TabsTrigger value="tax" data-testid="tab-tax">Impuestos</TabsTrigger>
@@ -186,6 +122,12 @@ export default function Configuracion() {
           <TabsTrigger value="report" data-testid="tab-report">Reporte diario</TabsTrigger>
           <TabsTrigger value="sunat" data-testid="tab-sunat">Facturación SUNAT</TabsTrigger>
         </TabsList>
+
+        {hasApiBackend() && (
+          <TabsContent value="subscription" className="mt-4">
+            <SubscriptionPanel />
+          </TabsContent>
+        )}
 
         <TabsContent value="business" className="mt-4">
           <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4 max-w-2xl">
@@ -324,89 +266,40 @@ export default function Configuracion() {
               <div>
                 <h3 className="font-heading font-bold">Facturación electrónica SUNAT</h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  Opcional. Emisión directa (boleta/factura) sin intermediario, igual que Ventax.
-                  Necesitas RUC, usuario SOL secundario y certificado digital (.p12).
+                  Este servicio lo activa el administrador de Lavanet cuando lo contratas.
+                  No puedes configurarlo desde aquí.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center justify-between p-3 border rounded-lg">
-              <div>
-                <Label>Activar SUNAT</Label>
-                <p className="text-xs text-slate-500">Si está apagado, el POS solo genera ticket interno</p>
+            <div className="p-4 border rounded-lg bg-slate-50 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-600">Estado</span>
+                <span className={`font-semibold ${sunat.enabled ? "text-emerald-700" : "text-slate-500"}`}>
+                  {sunat.enabled ? "Activo — puedes emitir boleta/factura en el POS" : "No contratado"}
+                </span>
               </div>
-              <Switch checked={sunat.enabled} onCheckedChange={(v) => setSunat((s) => ({ ...s, enabled: v }))} />
+              {sunat.enabled && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">RUC emisor</span>
+                    <span className="font-medium">{sunat.ruc || "—"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Ambiente</span>
+                    <span className="font-medium">{sunat.environment === "produccion" ? "Producción" : "Beta (pruebas)"}</span>
+                  </div>
+                </>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <Label>RUC emisor (11 dígitos)</Label>
-                <Input className="mt-1 h-11" value={sunat.ruc} onChange={(e) => setSunat((s) => ({ ...s, ruc: e.target.value }))} />
-              </div>
-              <div>
-                <Label>Razón social</Label>
-                <Input className="mt-1 h-11" value={sunat.businessName} onChange={(e) => setSunat((s) => ({ ...s, businessName: e.target.value }))} />
-              </div>
-              <div className="sm:col-span-2">
-                <Label>Dirección fiscal</Label>
-                <Input className="mt-1 h-11" value={sunat.address} onChange={(e) => setSunat((s) => ({ ...s, address: e.target.value }))} />
-              </div>
-              <div>
-                <Label>Ubigeo</Label>
-                <Input className="mt-1 h-11" value={sunat.ubigeo} onChange={(e) => setSunat((s) => ({ ...s, ubigeo: e.target.value }))} />
-              </div>
-              <div>
-                <Label>Ambiente</Label>
-                <Select value={sunat.environment} onValueChange={(v) => setSunat((s) => ({ ...s, environment: v }))}>
-                  <SelectTrigger className="mt-1 h-11"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="beta">Beta (pruebas)</SelectItem>
-                    <SelectItem value="produccion">Producción</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Usuario SOL secundario</Label>
-                <Input className="mt-1 h-11" value={sunat.solUser} onChange={(e) => setSunat((s) => ({ ...s, solUser: e.target.value }))} placeholder="MODDATOS" />
-              </div>
-              <div>
-                <Label>Clave SOL</Label>
-                <Input type="password" className="mt-1 h-11" value={sunat.solPass} onChange={(e) => setSunat((s) => ({ ...s, solPass: e.target.value }))} placeholder="••••••••" />
-              </div>
-              <div>
-                <Label>Serie factura</Label>
-                <Input className="mt-1 h-11" value={sunat.seriesInvoice} onChange={(e) => setSunat((s) => ({ ...s, seriesInvoice: e.target.value.toUpperCase() }))} />
-              </div>
-              <div>
-                <Label>Serie boleta</Label>
-                <Input className="mt-1 h-11" value={sunat.seriesBoleta} onChange={(e) => setSunat((s) => ({ ...s, seriesBoleta: e.target.value.toUpperCase() }))} />
-              </div>
-              <div>
-                <Label>Contraseña del certificado .p12</Label>
-                <Input type="password" className="mt-1 h-11" value={sunat.certificatePassword} onChange={(e) => setSunat((s) => ({ ...s, certificatePassword: e.target.value }))} />
-              </div>
-              <div>
-                <Label>Certificado digital (.p12)</Label>
-                <label className="mt-1 flex items-center justify-center gap-2 h-11 border border-dashed rounded-md cursor-pointer hover:bg-slate-50 text-sm text-slate-600">
-                  <Upload className="w-4 h-4" />
-                  {sunat.hasCertificate ? "Certificado cargado / reemplazar" : "Subir .p12"}
-                  <input type="file" accept=".p12,.pfx" className="hidden" onChange={onCertFile} />
-                </label>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button onClick={saveSunat} disabled={sunatBusy} className="h-11 bg-brand hover:bg-brand-dark flex-1">
-                Guardar SUNAT
-              </Button>
-              <Button onClick={testSunat} disabled={sunatBusy} variant="outline" className="h-11 flex-1">
-                Probar certificado
-              </Button>
-            </div>
-            <p className="text-[11px] text-slate-500">
-              Trámite en SUNAT: obtener certificado digital y crear usuario secundario con permiso de emisión.
-              Empieza en <strong>beta</strong> antes de producción.
-            </p>
+            {!sunat.enabled && (
+              <p className="text-sm text-slate-600">
+                Si necesitas boleta o factura electrónica, escríbenos por WhatsApp{" "}
+                <a href="https://wa.me/51906591037" className="text-brand font-semibold">906 591 037</a>.
+                Te pediremos RUC, certificado digital (.p12) y usuario SOL.
+              </p>
+            )}
           </div>
         </TabsContent>
       </Tabs>

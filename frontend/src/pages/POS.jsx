@@ -41,9 +41,18 @@ export default function POS() {
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [emitSunat, setEmitSunat] = useState(false);
+  const [sunatEnabled, setSunatEnabled] = useState(false);
   const [cpeType, setCpeType] = useState("03");
   const [clientDoc, setClientDoc] = useState("");
   const [invoiceLabel, setInvoiceLabel] = useState("");
+
+  useEffect(() => {
+    if (!hasApiBackend()) return;
+    api
+      .get("/api/sunat/status")
+      .then(({ data: res }) => setSunatEnabled(!!res?.data?.enabled))
+      .catch(() => setSunatEnabled(false));
+  }, []);
 
   const filteredServices = useMemo(() => {
     const tenantFilter = tenantId ? s => s.tenantId === tenantId : s => true;
@@ -370,33 +379,35 @@ export default function POS() {
               </div>
             )}
 
-            <div className="border border-slate-200 rounded-lg p-3 space-y-2">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-sm">Emitir boleta/factura SUNAT</Label>
-                  <p className="text-[10px] text-slate-500">Opcional — requiere SUNAT activo en Ajustes</p>
+            {sunatEnabled && (
+              <div className="border border-slate-200 rounded-lg p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm">Emitir boleta/factura SUNAT</Label>
+                    <p className="text-[10px] text-slate-500">Servicio contratado con Lavanet</p>
+                  </div>
+                  <Switch checked={emitSunat} onCheckedChange={setEmitSunat} />
                 </div>
-                <Switch checked={emitSunat} onCheckedChange={setEmitSunat} />
+                {emitSunat && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Select value={cpeType} onValueChange={setCpeType}>
+                      <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="03">Boleta</SelectItem>
+                        <SelectItem value="01">Factura</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      className="h-11"
+                      placeholder={cpeType === "01" ? "RUC cliente" : "DNI (opcional)"}
+                      value={clientDoc}
+                      onChange={(e) => setClientDoc(e.target.value)}
+                      inputMode="numeric"
+                    />
+                  </div>
+                )}
               </div>
-              {emitSunat && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <Select value={cpeType} onValueChange={setCpeType}>
-                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="03">Boleta</SelectItem>
-                      <SelectItem value="01">Factura</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    className="h-11"
-                    placeholder={cpeType === "01" ? "RUC cliente" : "DNI (opcional)"}
-                    value={clientDoc}
-                    onChange={(e) => setClientDoc(e.target.value)}
-                    inputMode="numeric"
-                  />
-                </div>
-              )}
-            </div>
+            )}
 
             <Button data-testid="pos-checkout" onClick={handleCheckout} className="w-full h-12 bg-brand hover:bg-brand-dark font-semibold mt-2 text-base">
               <CheckCircle2 className="w-4 h-4 mr-2" /> Cobrar y generar orden

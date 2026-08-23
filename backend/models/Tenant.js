@@ -88,4 +88,8 @@ const TenantSchema = new mongoose.Schema(
 
 TenantSchema.index({ name: 1 });
 
+TenantSchema.pre("validate", function normalizeLegacyFields() {
+  if (!this.plan || this.plan === "free") this.plan = "custom";
+});
+
 module.exports = mongoose.model("Tenant", TenantSchema);

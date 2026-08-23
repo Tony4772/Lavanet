@@ -3,7 +3,7 @@ const Payment = require("../models/Payment");
 const culqi = require("./culqi");
 const { sendBillingEmail } = require("./notify");
 
-const TRIAL_DAYS = Number(process.env.BILLING_TRIAL_DAYS || 61);
+const TRIAL_DAYS = Number(process.env.BILLING_TRIAL_DAYS || 30);
 const GRACE_DAYS = Number(process.env.BILLING_GRACE_DAYS || 5);
 const CYCLE_DAYS = Number(process.env.BILLING_CYCLE_DAYS || 30);
 
@@ -13,11 +13,29 @@ const addDays = (date, days) => {
   return d;
 };
 
+const startOfDay = (date) => {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+/** Días calendario desde `from` hasta `to` (sin horas). */
+const calendarDaysUntil = (from, to) =>
+  Math.round((startOfDay(to) - startOfDay(from)) / (1000 * 60 * 60 * 24));
+
 exports.TRIAL_DAYS = TRIAL_DAYS;
 exports.GRACE_DAYS = GRACE_DAYS;
 exports.CYCLE_DAYS = CYCLE_DAYS;
 
-exports.computeFirstChargeAt = (startedAt) => addDays(startedAt, TRIAL_DAYS);
+/** 30 días gratis contando el alta; el cobro es al inicio del día siguiente (día 31). */
+exports.computeFirstChargeAt = (startedAt) => addDays(startOfDay(startedAt), TRIAL_DAYS);
+
+const isFirstChargeDue = (tenant, now = new Date()) =>
+  !!(
+    tenant.firstChargeAt &&
+    startOfDay(now) >= startOfDay(tenant.firstChargeAt) &&
+    !tenant.lastPaidAt
+  );
 
 exports.syncTenantSchedule = (tenant) => {
   if (tenant.isDemo || tenant.slug === "demo") {
@@ -25,8 +43,11 @@ exports.syncTenantSchedule = (tenant) => {
     return tenant;
   }
   if (!tenant.startedAt) tenant.startedAt = tenant.createdAt || new Date();
+  const expectedFirstCharge = exports.computeFirstChargeAt(tenant.startedAt);
   if (!tenant.firstChargeAt) {
-    tenant.firstChargeAt = exports.computeFirstChargeAt(tenant.startedAt);
+    tenant.firstChargeAt = expectedFirstCharge;
+  } else if (tenant.billingStatus === "trial" && !tenant.lastPaidAt) {
+    tenant.firstChargeAt = expectedFirstCharge;
   }
   return tenant;
 };
@@ -34,6 +55,9 @@ exports.syncTenantSchedule = (tenant) => {
 exports.getBillingSnapshot = (tenant) => {
   const now = new Date();
   const t = exports.syncTenantSchedule(tenant);
+  const daysUntilNext = t.nextChargeAt
+    ? Math.ceil((t.nextChargeAt - now) / (1000 * 60 * 60 * 24))
+    : null;
   return {
     status: t.billingStatus,
     monthlyPrice: t.monthlyPrice,
@@ -42,10 +66,178 @@ exports.getBillingSnapshot = (tenant) => {
     firstChargeAt: t.firstChargeAt,
     nextChargeAt: t.nextChargeAt,
     graceUntil: t.graceUntil,
+    lastPaidAt: t.lastPaidAt,
     daysUntilFirstCharge: t.firstChargeAt
-      ? Math.ceil((t.firstChargeAt - now) / (1000 * 60 * 60 * 24))
+      ? calendarDaysUntil(now, t.firstChargeAt)
       : null,
+    daysUntilNextCharge: daysUntilNext,
+    hasCard: !!t.culqiCardId,
+    cardLast4: t.culqiCardLast4 || null,
+    cardBrand: t.culqiCardBrand || null,
     isBlocked: t.billingStatus === "suspended",
+    trialDays: TRIAL_DAYS,
+  };
+};
+
+exports.registerCulqiCard = async (tenant, culqiToken) => {
+  if (!culqiToken) throw new Error("Token de tarjeta requerido");
+
+  let customerId = tenant.culqiCustomerId;
+  if (!customerId) {
+    const owner = tenant.owner;
+    const name = owner?.name || tenant.name;
+    const customer = await culqi.createCustomer({
+      email: tenant.billingEmail,
+      first_name: name.split(" ")[0],
+      last_name: name.split(" ").slice(1).join(" ") || "Cliente",
+      phone_number: tenant.contactPhone?.replace(/\D/g, "").slice(-9) || undefined,
+    });
+    customerId = customer.id;
+    tenant.culqiCustomerId = customerId;
+  }
+
+  const card = await culqi.createCard({ customer_id: customerId, token_id: culqiToken });
+  tenant.culqiCardId = card.id;
+  tenant.culqiCardLast4 = card.last_four;
+  tenant.culqiCardBrand = card.iin?.brand || card.source?.brand;
+  await tenant.save();
+
+  return {
+    last4: tenant.culqiCardLast4,
+    brand: tenant.culqiCardBrand,
+  };
+};
+
+exports.isPaymentDue = (tenant) => {
+  const now = new Date();
+  exports.syncTenantSchedule(tenant);
+  const dueFirst = isFirstChargeDue(tenant, now);
+  const dueRecurring = tenant.nextChargeAt && now >= tenant.nextChargeAt && tenant.lastPaidAt;
+  const inGrace = tenant.billingStatus === "grace";
+  const suspended = tenant.billingStatus === "suspended";
+  return dueFirst || dueRecurring || inGrace || suspended;
+};
+
+exports.payNowWithCard = async (tenant) => {
+  if (!tenant.culqiCardId) throw new Error("Registra una tarjeta antes de pagar");
+  if (!exports.isPaymentDue(tenant)) {
+    throw new Error("Tu próximo cobro aún no vence. El cargo se hará automáticamente en la fecha indicada.");
+  }
+  return exports.attemptCulqiCharge(tenant);
+};
+
+exports.createCheckoutSession = async (tenant, user, email) => {
+  exports.syncTenantSchedule(tenant);
+  const amountCents = Math.round(Number(tenant.monthlyPrice || 0) * 100);
+  if (amountCents < 100) throw new Error("Precio mensual inválido");
+
+  const billingEmail = (email || tenant.billingEmail || user?.email)?.trim().toLowerCase();
+  if (!billingEmail) throw new Error("Email requerido para Culqi");
+
+  const exp = Math.floor(Date.now() / 1000) + 24 * 3600;
+  const nameParts = (user?.name || tenant.name || "Cliente").split(" ");
+  const order = await culqi.createOrder({
+    amount: amountCents,
+    currency_code: tenant.currency || "PEN",
+    description: `Suscripción lavanet — ${tenant.name} (IGV incl.)`,
+    order_number: `lvn-${tenant._id.toString().slice(-8)}-${Date.now()}`,
+    client_details: {
+      email: billingEmail,
+      first_name: nameParts[0],
+      last_name: nameParts.slice(1).join(" ") || "Cliente",
+    },
+    expiration_date: exp,
+  });
+
+  return {
+    publicKey: culqi.getPublicKey(),
+    settings: {
+      title: "Pagar suscripción lavanet",
+      currency: "PEN",
+      amount: amountCents,
+      order: order.id,
+    },
+    client: { email: billingEmail },
+    options: {
+      lang: "es",
+      installments: false,
+      modal: true,
+      paymentMethods: {
+        tarjeta: true,
+        yape: true,
+        bancaMovil: false,
+        agente: false,
+        billetera: false,
+        cuotealo: false,
+      },
+    },
+  };
+};
+
+exports.processCulqiToken = async (tenant, { tokenId, email, user }) => {
+  if (!tokenId) throw new Error("Token Culqi requerido");
+
+  const billingEmail = (email || tenant.billingEmail || user?.email)?.trim().toLowerCase();
+  if (!billingEmail) throw new Error("Email requerido");
+  tenant.billingEmail = billingEmail;
+
+  const amountCents = Math.round(Number(tenant.monthlyPrice || 0) * 100);
+
+  if (tokenId.startsWith("ype_")) {
+    const charge = await culqi.createCharge({
+      amount: amountCents,
+      currency_code: tenant.currency || "PEN",
+      email: billingEmail,
+      source_id: tokenId,
+      description: `Suscripción lavanet — ${tenant.name} (IGV incl.)`,
+    });
+    const now = new Date();
+    tenant.billingStatus = "active";
+    tenant.status = "active";
+    tenant.lastPaidAt = now;
+    tenant.nextChargeAt = addDays(now, CYCLE_DAYS);
+    tenant.graceUntil = null;
+    tenant.lastCulqiChargeId = charge.id;
+    await tenant.save();
+    await recordPayment(tenant, {
+      amountCents,
+      status: "paid",
+      culqiChargeId: charge.id,
+      culqiResponse: charge,
+      notes: "Pago Yape (Culqi)",
+    });
+    return { method: "yape", charge, billing: exports.getBillingSnapshot(tenant) };
+  }
+
+  await exports.registerCulqiCard(tenant, tokenId);
+  const charge = await culqi.createCharge({
+    amount: amountCents,
+    currency_code: tenant.currency || "PEN",
+    email: billingEmail,
+    source_id: tenant.culqiCardId,
+    description: `Suscripción lavanet — ${tenant.name} (IGV incl.)`,
+  });
+  const now = new Date();
+  tenant.billingStatus = "active";
+  tenant.status = "active";
+  tenant.lastPaidAt = now;
+  tenant.nextChargeAt = addDays(now, CYCLE_DAYS);
+  tenant.graceUntil = null;
+  tenant.lastCulqiChargeId = charge.id;
+  await tenant.save();
+  await recordPayment(tenant, {
+    amountCents,
+    status: "paid",
+    culqiChargeId: charge.id,
+    culqiResponse: charge,
+    notes: "Pago tarjeta (Culqi)",
+  });
+
+  return {
+    method: "card",
+    charge,
+    card: { last4: tenant.culqiCardLast4, brand: tenant.culqiCardBrand },
+    billing: exports.getBillingSnapshot(tenant),
   };
 };
 
@@ -69,6 +261,7 @@ exports.markPaidManual = async (tenant, userId, notes) => {
   const amountCents = Math.round(Number(tenant.monthlyPrice || 0) * 100);
   const now = new Date();
   tenant.billingStatus = "active";
+  tenant.status = "active";
   tenant.lastPaidAt = now;
   tenant.nextChargeAt = addDays(now, CYCLE_DAYS);
   tenant.graceUntil = null;
@@ -96,11 +289,12 @@ exports.attemptCulqiCharge = async (tenant) => {
     currency_code: tenant.currency || "PEN",
     email: tenant.billingEmail || tenant.contactEmail,
     source_id: tenant.culqiCardId,
-    description: `Suscripción lavanet — ${tenant.name}`,
+    description: `Suscripción lavanet — ${tenant.name} (IGV incl.)`,
   });
 
   const now = new Date();
   tenant.billingStatus = "active";
+  tenant.status = "active";
   tenant.lastPaidAt = now;
   tenant.nextChargeAt = addDays(now, CYCLE_DAYS);
   tenant.graceUntil = null;
@@ -147,7 +341,7 @@ exports.processDueBilling = async () => {
   for (const tenant of tenants) {
     try {
       exports.syncTenantSchedule(tenant);
-      const dueFirst = tenant.firstChargeAt && now >= tenant.firstChargeAt && !tenant.lastPaidAt;
+      const dueFirst = isFirstChargeDue(tenant, now);
       const dueRecurring = tenant.nextChargeAt && now >= tenant.nextChargeAt && tenant.lastPaidAt;
 
       if (tenant.billingStatus === "grace" && tenant.graceUntil && now > tenant.graceUntil) {
@@ -158,7 +352,7 @@ exports.processDueBilling = async () => {
 
       const notifyDays = [6, 3, 1, 0];
       if (tenant.firstChargeAt && !tenant.lastPaidAt) {
-        const daysLeft = Math.ceil((tenant.firstChargeAt - now) / (1000 * 60 * 60 * 24));
+        const daysLeft = calendarDaysUntil(now, tenant.firstChargeAt);
         if (notifyDays.includes(daysLeft) && tenant.lastBillingNotice !== String(daysLeft)) {
           await sendBillingEmail(tenant, "upcoming", { daysLeft });
           tenant.lastBillingNotice = String(daysLeft);

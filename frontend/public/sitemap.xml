@@ -11,8 +11,13 @@
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://lavanet.ebyzom.com/register</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <loc>https://lavanet.ebyzom.com/terminos</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://lavanet.ebyzom.com/privacidad</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
   </url>
 </urlset>

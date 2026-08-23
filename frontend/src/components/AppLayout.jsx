@@ -15,6 +15,7 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import ThemeToggle from "./ThemeToggle";
 import BrandLogo from "./BrandLogo";
+import SiteFooter from "./SiteFooter";
 
 const NAV = [
   { to: "/", label: "Inicio", icon: LayoutDashboard, testId: "nav-dashboard" },
@@ -90,7 +91,7 @@ export default function AppLayout() {
   const SidebarContent = ({ dense = false }) => (
     <>
       <div className={`px-5 ${dense ? "pt-14 pb-4" : "pt-5 pb-6"}`}>
-        <BrandLogo imgClassName="h-12 w-full max-w-[180px]" />
+        <BrandLogo size={dense ? "sidebarMobile" : "sidebar"} className="w-full flex justify-center" />
         <div className="text-brand-muted text-[10px] uppercase tracking-widest mt-2 truncate px-1">
           {businessName}
         </div>
@@ -169,7 +170,7 @@ export default function AppLayout() {
         </aside>
       </div>
 
-      <div className="lg:ml-64 pb-20 lg:pb-0">
+      <div className="lg:ml-64 pb-36 lg:pb-0 flex flex-col min-h-screen">
         {currentUser?.username === "demo" && (
           <div className="bg-amber-500 text-amber-950 text-center text-xs sm:text-sm py-2 px-4 font-medium">
             Modo demo — datos de ejemplo. Contrata por WhatsApp{" "}
@@ -183,15 +184,17 @@ export default function AppLayout() {
             </a>
           </div>
         )}
-        <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 h-14 sm:h-16 flex items-center px-3 sm:px-4 lg:px-8 gap-2 sm:gap-4">
+        <header className="sticky top-0 z-30 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 min-h-[4.25rem] sm:min-h-16 flex items-center px-3 sm:px-4 lg:px-8 gap-2 sm:gap-4">
           <button
-            className="lg:hidden p-2 -ml-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="lg:hidden p-2 -ml-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 min-h-[44px] min-w-[44px] flex items-center justify-center shrink-0"
             data-testid="sidebar-open"
             aria-label="Abrir menú"
             onClick={() => setMobileOpen(true)}
           >
             <Menu className="w-6 h-6 text-slate-700 dark:text-slate-200" />
           </button>
+
+          <BrandLogo size="header" className="lg:hidden shrink-0" />
 
           <Popover open={q.trim().length > 0} onOpenChange={(o) => !o && setQ("")}>
             <PopoverTrigger asChild>
@@ -323,9 +326,46 @@ export default function AppLayout() {
           </div>
         </header>
 
-        <main className="p-3 sm:p-4 lg:p-8 max-w-[100vw] overflow-x-hidden">
+        <main className="flex-1 p-3 sm:p-4 lg:p-8 max-w-[100vw] overflow-x-hidden">
+          {(currentUser?.subscriptionBlocked || currentUser?.billing?.status === "grace") &&
+            canAccess(currentUser?.role, "/configuracion") &&
+            !location.pathname.startsWith("/configuracion") && (
+              <div
+                className={`mb-4 rounded-xl border px-4 py-3 text-sm ${
+                  currentUser.subscriptionBlocked
+                    ? "border-red-200 bg-red-50 text-red-900"
+                    : "border-amber-200 bg-amber-50 text-amber-950"
+                }`}
+              >
+                {currentUser.subscriptionBlocked ? (
+                  <>
+                    Tu suscripción está suspendida.{" "}
+                    <button
+                      type="button"
+                      className="font-semibold underline"
+                      onClick={() => navigate("/configuracion?tab=subscription")}
+                    >
+                      Pagar suscripción
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    Debes pagar tu suscripción (periodo de gracia).{" "}
+                    <button
+                      type="button"
+                      className="font-semibold underline"
+                      onClick={() => navigate("/configuracion?tab=subscription")}
+                    >
+                      Pagar suscripción
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
           <Outlet />
         </main>
+
+        <SiteFooter className="hidden lg:block mt-auto" />
       </div>
 
       {/* Bottom nav móvil */}
@@ -363,6 +403,8 @@ export default function AppLayout() {
           </button>
         </div>
       </nav>
+
+      <SiteFooter className="lg:hidden pb-16" />
     </div>
   );
 }

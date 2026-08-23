@@ -3,9 +3,51 @@ const router = express.Router();
 const Tenant = require("../models/Tenant");
 const User = require("../models/User");
 const Payment = require("../models/Payment");
+const Order = require("../models/Order");
+const Customer = require("../models/Customer");
+const Service = require("../models/Service");
+const Product = require("../models/Product");
+const Cash = require("../models/Cash");
+const Coupon = require("../models/Coupon");
+const Invoice = require("../models/Invoice");
 const culqi = require("../lib/culqi");
 const billing = require("../lib/billing");
+const sunat = require("../lib/sunat");
+const { tenantToCompany } = require("../lib/sunat/buildPayload");
 const { protect, superadminOnly } = require("../middleware/auth");
+
+const applySunatConfig = (sunatCfg, body, fallbackName) => {
+  if (!body || body.enabled === false) {
+    sunatCfg.enabled = false;
+    return sunatCfg;
+  }
+  sunatCfg.enabled = true;
+  if (body.ruc !== undefined) sunatCfg.ruc = String(body.ruc).replace(/\D/g, "");
+  if (body.businessName !== undefined) sunatCfg.businessName = body.businessName || fallbackName;
+  if (body.address !== undefined) sunatCfg.address = body.address;
+  if (body.ubigeo !== undefined) sunatCfg.ubigeo = body.ubigeo;
+  if (body.solUser !== undefined) sunatCfg.solUser = body.solUser;
+  if (body.solPass) sunatCfg.solPass = body.solPass;
+  if (body.certificatePassword !== undefined) sunatCfg.certificatePassword = body.certificatePassword;
+  if (body.certificateP12) sunatCfg.certificateP12 = body.certificateP12;
+  if (body.environment) sunatCfg.environment = body.environment === "produccion" ? "produccion" : "beta";
+  if (body.seriesInvoice) sunatCfg.seriesInvoice = String(body.seriesInvoice).toUpperCase();
+  if (body.seriesBoleta) sunatCfg.seriesBoleta = String(body.seriesBoleta).toUpperCase();
+  return sunatCfg;
+};
+
+const sunatSummary = (tenant) => {
+  const s = tenant.sunat || {};
+  return {
+    enabled: !!s.enabled,
+    ruc: s.ruc || "",
+    environment: s.environment || "beta",
+    hasCertificate: !!s.certificateP12,
+    hasSol: !!(s.solUser && s.solPass),
+    seriesInvoice: s.seriesInvoice || "F001",
+    seriesBoleta: s.seriesBoleta || "B001",
+  };
+};
 
 router.use(protect, superadminOnly);
 
@@ -36,11 +78,21 @@ router.get("/tenants", async (req, res) => {
   try {
     const tenants = await Tenant.find({ slug: { $nin: ["demo", "__system__"] } })
       .sort({ createdAt: -1 })
-      .populate("owner", "name username email");
-    const rows = tenants.map((t) => ({
-      ...t.toObject(),
-      billing: billing.getBillingSnapshot(t),
-    }));
+      .populate("owner", "name username email")
+      .select("+sunat.certificateP12 +sunat.solPass");
+    const rows = tenants.map((t) => {
+      const obj = t.toObject();
+      if (obj.sunat) {
+        delete obj.sunat.certificateP12;
+        delete obj.sunat.solPass;
+        delete obj.sunat.certificatePassword;
+      }
+      return {
+        ...obj,
+        billing: billing.getBillingSnapshot(t),
+        sunatSummary: sunatSummary(t),
+      };
+    });
     res.json({ status: "success", data: { tenants: rows } });
   } catch (err) {
     res.status(500).json({ status: "error", message: err.message });
@@ -78,6 +130,22 @@ router.post("/tenants", async (req, res) => {
       return res.status(400).json({ status: "fail", message: "monthlyPrice inválido" });
     }
 
+    if (sunat?.enabled) {
+      const ruc = String(sunat.ruc || "").replace(/\D/g, "");
+      if (ruc.length !== 11) {
+        return res.status(400).json({ status: "fail", message: "SUNAT: RUC emisor debe tener 11 dígitos" });
+      }
+      if (!sunat.solUser?.trim() || !sunat.solPass?.trim()) {
+        return res.status(400).json({ status: "fail", message: "SUNAT: usuario y clave SOL son obligatorios" });
+      }
+      if (!sunat.certificateP12?.trim()) {
+        return res.status(400).json({ status: "fail", message: "SUNAT: certificado .p12 es obligatorio" });
+      }
+      if (!sunat.certificatePassword?.trim()) {
+        return res.status(400).json({ status: "fail", message: "SUNAT: contraseña del certificado es obligatoria" });
+      }
+    }
+
     let slug = slugify(name);
     if (await Tenant.findOne({ slug })) slug = `${slug}-${Date.now().toString(36)}`;
 
@@ -95,22 +163,14 @@ router.post("/tenants", async (req, res) => {
       contactEmail: contactEmail?.trim(),
       billingEmail: (billingEmail || contactEmail || adminEmail)?.trim().toLowerCase(),
       contractNotes: contractNotes?.trim(),
-      sunat: sunat?.enabled
-        ? {
-            enabled: true,
-            ruc: sunat.ruc,
-            businessName: sunat.businessName || name.trim(),
-            address: sunat.address,
-            ubigeo: sunat.ubigeo,
-            solUser: sunat.solUser,
-            solPass: sunat.solPass,
-            certificatePassword: sunat.certificatePassword,
-            environment: sunat.environment || "beta",
-            seriesInvoice: sunat.seriesInvoice || "F001",
-            seriesBoleta: sunat.seriesBoleta || "B001",
-          }
-        : { enabled: false },
+      sunat: { enabled: false },
     });
+
+    if (sunat?.enabled) {
+      tenant.sunat = applySunatConfig(tenant.sunat || {}, sunat, name.trim());
+      tenant.markModified("sunat");
+      await tenant.save();
+    }
 
     const admin = await User.create({
       name: adminName.trim(),
@@ -173,10 +233,26 @@ router.patch("/tenants/:id", async (req, res) => {
       return res.status(404).json({ status: "fail", message: "Tenant no encontrado" });
     }
 
-    const { monthlyPrice, billingStatus, status, contractNotes, contactPhone, contactEmail, billingEmail } =
-      req.body;
+    const {
+      name,
+      monthlyPrice,
+      billingStatus,
+      status,
+      contractNotes,
+      contactPhone,
+      contactEmail,
+      billingEmail,
+      sunat: sunatBody,
+    } = req.body;
 
-    if (monthlyPrice !== undefined) tenant.monthlyPrice = Number(monthlyPrice);
+    if (name !== undefined && String(name).trim()) tenant.name = String(name).trim();
+    if (monthlyPrice !== undefined) {
+      const price = Number(monthlyPrice);
+      if (!Number.isFinite(price) || price < 0) {
+        return res.status(400).json({ status: "fail", message: "monthlyPrice inválido" });
+      }
+      tenant.monthlyPrice = price;
+    }
     if (contractNotes !== undefined) tenant.contractNotes = contractNotes;
     if (contactPhone !== undefined) tenant.contactPhone = contactPhone;
     if (contactEmail !== undefined) tenant.contactEmail = contactEmail;
@@ -184,12 +260,105 @@ router.patch("/tenants/:id", async (req, res) => {
     if (billingStatus && ["trial", "active", "grace", "suspended"].includes(billingStatus)) {
       tenant.billingStatus = billingStatus;
       if (billingStatus === "suspended") tenant.status = "suspended";
-      if (billingStatus === "active") tenant.status = "active";
+      if (billingStatus === "active" && tenant.status !== "inactive") tenant.status = "active";
     }
     if (status && ["active", "inactive", "suspended"].includes(status)) tenant.status = status;
+    if (tenant.plan === "free" || !tenant.plan) tenant.plan = "custom";
+    billing.syncTenantSchedule(tenant);
+
+    if (sunatBody !== undefined) {
+      tenant.sunat = applySunatConfig(tenant.sunat || {}, sunatBody, tenant.name);
+      tenant.markModified("sunat");
+    }
 
     await tenant.save();
-    res.json({ status: "success", data: { tenant, billing: billing.getBillingSnapshot(tenant) } });
+    res.json({
+      status: "success",
+      data: { tenant, billing: billing.getBillingSnapshot(tenant), sunatSummary: sunatSummary(tenant) },
+    });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+});
+
+router.post("/tenants/:id/pause", async (req, res) => {
+  try {
+    const tenant = await Tenant.findById(req.params.id);
+    if (!tenant || tenant.isDemo) {
+      return res.status(404).json({ status: "fail", message: "Cliente no encontrado" });
+    }
+    tenant.status = "inactive";
+    await tenant.save();
+    res.json({
+      status: "success",
+      message: "Cliente pausado",
+      data: { tenant, billing: billing.getBillingSnapshot(tenant) },
+    });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+});
+
+router.post("/tenants/:id/block", async (req, res) => {
+  try {
+    const tenant = await Tenant.findById(req.params.id);
+    if (!tenant || tenant.isDemo) {
+      return res.status(404).json({ status: "fail", message: "Cliente no encontrado" });
+    }
+    await billing.suspendTenant(tenant, req.body?.reason || "Bloqueado por superadmin");
+    const fresh = await Tenant.findById(tenant._id);
+    res.json({
+      status: "success",
+      message: "Cliente bloqueado",
+      data: { tenant: fresh, billing: billing.getBillingSnapshot(fresh) },
+    });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+});
+
+router.post("/tenants/:id/reactivate", async (req, res) => {
+  try {
+    const tenant = await Tenant.findById(req.params.id);
+    if (!tenant || tenant.isDemo) {
+      return res.status(404).json({ status: "fail", message: "Cliente no encontrado" });
+    }
+    tenant.status = "active";
+    if (tenant.billingStatus === "suspended") {
+      tenant.billingStatus = tenant.lastPaidAt ? "active" : "trial";
+      tenant.graceUntil = undefined;
+    }
+    await tenant.save();
+    res.json({
+      status: "success",
+      message: "Cliente reactivado",
+      data: { tenant, billing: billing.getBillingSnapshot(tenant) },
+    });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+});
+
+router.delete("/tenants/:id", async (req, res) => {
+  try {
+    const tenant = await Tenant.findById(req.params.id);
+    if (!tenant || tenant.isDemo) {
+      return res.status(404).json({ status: "fail", message: "Cliente no encontrado" });
+    }
+    const id = tenant._id;
+    await Promise.all([
+      User.deleteMany({ tenant: id }),
+      Payment.deleteMany({ tenant: id }),
+      Order.deleteMany({ tenant: id }),
+      Customer.deleteMany({ tenant: id }),
+      Service.deleteMany({ tenant: id }),
+      Product.deleteMany({ tenant: id }),
+      Cash.deleteMany({ tenant: id }),
+      Coupon.deleteMany({ tenant: id }),
+      Invoice.deleteMany({ tenant: id }),
+    ]);
+    await tenant.deleteOne();
+    res.json({ status: "success", message: "Cliente eliminado" });
   } catch (err) {
     res.status(500).json({ status: "error", message: err.message });
   }
@@ -199,12 +368,16 @@ router.post("/tenants/:id/mark-paid", async (req, res) => {
   try {
     const tenant = await Tenant.findById(req.params.id);
     if (!tenant || tenant.isDemo) {
-      return res.status(404).json({ status: "fail", message: "Tenant no encontrado" });
+      return res.status(404).json({ status: "fail", message: "Cliente no encontrado" });
+    }
+    if (!tenant.monthlyPrice || Number(tenant.monthlyPrice) <= 0) {
+      return res.status(400).json({ status: "fail", message: "Precio mensual inválido para registrar pago" });
     }
     await billing.markPaidManual(tenant, req.user._id, req.body?.notes);
-    res.json({ status: "success", data: { billing: billing.getBillingSnapshot(tenant) } });
+    const fresh = await Tenant.findById(tenant._id);
+    res.json({ status: "success", data: { billing: billing.getBillingSnapshot(fresh) } });
   } catch (err) {
-    res.status(500).json({ status: "error", message: err.message });
+    res.status(500).json({ status: "error", message: err.message || "Error al registrar pago" });
   }
 });
 
@@ -259,10 +432,55 @@ router.post("/tenants/:id/card", async (req, res) => {
   }
 });
 
+router.post("/tenants/:id/sunat/test", async (req, res) => {
+  try {
+    const tenant = await Tenant.findById(req.params.id).select(
+      "+sunat.solPass +sunat.certificatePassword +sunat.certificateP12"
+    );
+    if (!tenant || tenant.isDemo) {
+      return res.status(404).json({ status: "fail", message: "Tenant no encontrado" });
+    }
+    if (!tenant.sunat?.enabled) {
+      return res.status(400).json({ status: "fail", message: "SUNAT no activado para este cliente" });
+    }
+    const result = await sunat.testConnection(tenantToCompany(tenant));
+    res.json({ status: "success", data: result });
+  } catch (err) {
+    res.status(400).json({ status: "fail", message: err.message });
+  }
+});
+
 router.post("/billing/run", async (req, res) => {
   try {
     const result = await billing.processDueBilling();
     res.json({ status: "success", data: result });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+});
+
+router.post("/change-password", async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ status: "fail", message: "Contraseña actual y nueva son requeridas" });
+    }
+    if (String(newPassword).length < 8) {
+      return res.status(400).json({ status: "fail", message: "La nueva contraseña debe tener al menos 8 caracteres" });
+    }
+
+    const user = await User.findById(req.user._id).select("+password");
+    if (!user || user.role !== "superadmin") {
+      return res.status(403).json({ status: "fail", message: "Solo superadmin" });
+    }
+    if (!(await user.comparePassword(currentPassword))) {
+      return res.status(401).json({ status: "fail", message: "Contraseña actual incorrecta" });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ status: "success", message: "Contraseña actualizada" });
   } catch (err) {
     res.status(500).json({ status: "error", message: err.message });
   }

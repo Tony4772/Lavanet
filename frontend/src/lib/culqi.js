@@ -1,86 +1,76 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "./api";
 
-let culqiReadyPromise = null;
+let checkoutReadyPromise = null;
 
-function loadCulqiScript() {
+function loadCulqiCheckoutScript() {
   if (typeof window === "undefined") return Promise.reject(new Error("no window"));
-  if (window.Culqi) return Promise.resolve(window.Culqi);
-  if (culqiReadyPromise) return culqiReadyPromise;
+  if (window.CulqiCheckout) return Promise.resolve(window.CulqiCheckout);
+  if (checkoutReadyPromise) return checkoutReadyPromise;
 
-  culqiReadyPromise = new Promise((resolve, reject) => {
-    const existing = document.querySelector('script[data-culqi="1"]');
+  checkoutReadyPromise = new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-culqi-checkout="1"]');
     if (existing) {
-      existing.addEventListener("load", () => resolve(window.Culqi));
+      existing.addEventListener("load", () => resolve(window.CulqiCheckout));
       return;
     }
     const s = document.createElement("script");
-    s.src = "https://checkout.culqi.com/js/v4";
+    s.src = "https://js.culqi.com/checkout-js";
     s.async = true;
-    s.dataset.culqi = "1";
-    s.onload = () => resolve(window.Culqi);
-    s.onerror = () => reject(new Error("No se pudo cargar Culqi"));
+    s.dataset.culqiCheckout = "1";
+    s.onload = () => resolve(window.CulqiCheckout);
+    s.onerror = () => reject(new Error("No se pudo cargar Culqi Checkout"));
     document.body.appendChild(s);
   });
 
-  return culqiReadyPromise;
+  return checkoutReadyPromise;
 }
 
-export function useCulqiPublicKey() {
+export function useCulqiPublicKey(endpoint = "/api/billing/culqi-public-key") {
   const [publicKey, setPublicKey] = useState(process.env.REACT_APP_CULQI_PUBLIC_KEY || "");
 
   useEffect(() => {
     if (publicKey) return;
     api
-      .get("/api/superadmin/culqi-public-key")
+      .get(endpoint)
       .then(({ data }) => setPublicKey(data?.data?.publicKey || ""))
       .catch(() => {});
-  }, [publicKey]);
+  }, [publicKey, endpoint]);
 
   return publicKey;
 }
 
-export function useCulqiToken(publicKey) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+/** Abre el checkout oficial de Culqi (tarjeta / Yape). */
+export async function openCulqiCheckout(session) {
+  const CulqiCheckout = await loadCulqiCheckoutScript();
+  const publicKey = session?.publicKey;
+  if (!publicKey) throw new Error("Culqi no configurado");
 
-  const createToken = useCallback(
-    async ({ cardNumber, cvv, expirationMonth, expirationYear, email }) => {
-      if (!publicKey) throw new Error("Culqi no configurado");
-      setLoading(true);
-      setError("");
-      try {
-        const Culqi = await loadCulqiScript();
-        Culqi.publicKey = publicKey;
+  const config = {
+    settings: session.settings,
+    client: session.client,
+    options: session.options,
+  };
 
-        return await new Promise((resolve, reject) => {
-          window.culqi = () => {
-            if (window.Culqi.token) {
-              resolve(window.Culqi.token.id);
-            } else if (window.Culqi.error) {
-              reject(new Error(window.Culqi.error.user_message || "Tarjeta inválida"));
-            } else {
-              reject(new Error("No se generó token"));
-            }
-            setLoading(false);
-          };
+  return new Promise((resolve, reject) => {
+    const checkout = new CulqiCheckout(publicKey, config);
 
-          Culqi.createToken({
-            card_number: cardNumber.replace(/\s/g, ""),
-            cvv,
-            expiration_month: expirationMonth,
-            expiration_year: expirationYear,
-            email,
-          });
+    checkout.culqi = () => {
+      if (checkout.token?.id) {
+        checkout.close?.();
+        resolve({
+          tokenId: checkout.token.id,
+          email: checkout.token.email || session.client?.email,
         });
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
-        throw err;
+        return;
       }
-    },
-    [publicKey]
-  );
+      if (checkout.error) {
+        reject(new Error(checkout.error.user_message || checkout.error.merchant_message || "Pago cancelado"));
+        return;
+      }
+      reject(new Error("No se completó el pago en Culqi"));
+    };
 
-  return { createToken, loading, error };
+    checkout.open();
+  });
 }

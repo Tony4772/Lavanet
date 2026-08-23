@@ -9,6 +9,7 @@ import React, {
 import { initialData, emptyBusinessBundle } from "../lib/seed";
 import { useTenant } from "./TenantContext";
 import { api, hasApiBackend, setAuthToken } from "../lib/api";
+import { roleFromApi } from "../lib/userRoles";
 
 const STORAGE_KEY = "lavanet_data_v1";
 const AUTH_KEY = "lavanet_auth_v1";
@@ -129,15 +130,11 @@ export const AppProvider = ({ children }) => {
       name: user.name,
       username: user.username,
       email: user.email,
-      role:
-        user.role === "superadmin"
-          ? "Superadmin"
-          : user.role === "admin"
-            ? "Administrador"
-            : user.role,
+      role: roleFromApi(user.role),
       rawRole: user.role,
       tenantId: user.tenant ? String(user.tenant) : null,
       active: user.isActive !== false,
+      lastAccess: user.lastLogin || null,
       isJWT: true,
       isDemo: Boolean(user.isDemo),
     });
@@ -145,14 +142,33 @@ export const AppProvider = ({ children }) => {
   const applySession = useCallback(
     (res) => {
       const user = res?.data?.user;
+      const tenant = res?.data?.tenant;
       if (res?.token) setAuthToken(res.token);
       if (user?.tenant) setTenant(String(user.tenant));
       const mapped = mapApiUser(user);
+      if (tenant) {
+        mapped.billing = tenant.billing;
+        mapped.subscriptionBlocked = !!tenant.subscriptionBlocked;
+        mapped.isDemoTenant = !!tenant.isDemo;
+        mapped.tenantName = tenant.name;
+      }
       setCurrentUser(mapped);
       return mapped;
     },
     [setTenant]
   );
+
+  const updateSubscriptionState = useCallback(({ billing, subscriptionBlocked }) => {
+    setCurrentUser((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        billing: billing ?? prev.billing,
+        subscriptionBlocked:
+          subscriptionBlocked !== undefined ? subscriptionBlocked : prev.subscriptionBlocked,
+      };
+    });
+  }, []);
 
   const login = useCallback(
     async (username, password) => {
@@ -160,7 +176,11 @@ export const AppProvider = ({ children }) => {
         try {
           const { data: res } = await api.post("/api/auth/login", { username, password });
           const mapped = applySession(res);
-          return { ok: true, superadmin: mapped.rawRole === "superadmin" };
+          return {
+            ok: true,
+            superadmin: mapped.rawRole === "superadmin",
+            subscriptionBlocked: !!mapped.subscriptionBlocked,
+          };
         } catch (err) {
           if (err?.response) {
             return { ok: false, error: err.response.data?.message || "Credenciales inválidas" };
@@ -563,6 +583,7 @@ export const AppProvider = ({ children }) => {
     login,
     logout,
     applySession,
+    updateSubscriptionState,
     registerAccount,
     resetDemo,
     createOrder,
