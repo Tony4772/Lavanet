@@ -6,14 +6,14 @@ import React, {
   useCallback,
   useMemo,
 } from "react";
-import { initialData } from "../lib/seed";
+import { initialData, emptyBusinessBundle } from "../lib/seed";
 import { useTenant } from "./TenantContext";
 import { api, hasApiBackend, setAuthToken } from "../lib/api";
 
 const STORAGE_KEY = "lavanet_data_v1";
 const AUTH_KEY = "lavanet_auth_v1";
 const DATA_VERSION_KEY = "lavanet_data_version";
-const DATA_VERSION = "2";
+const DATA_VERSION = "3";
 
 const AppContext = createContext(null);
 
@@ -23,31 +23,45 @@ const stripPassword = (user) => {
   return safe;
 };
 
-const sameTenant = (row, tenantId) =>
-  !tenantId || !row?.tenantId || row.tenantId === tenantId;
+const sameTenant = (row, tenantId) => {
+  if (!tenantId) return false;
+  return row?.tenantId === tenantId;
+};
 
-const filterStore = (store, tenantId) => ({
-  ...store,
-  users: (store.users || []).filter((u) => sameTenant(u, tenantId)),
-  customers: (store.customers || []).filter((c) => sameTenant(c, tenantId)),
-  orders: (store.orders || []).filter((o) => sameTenant(o, tenantId)),
-  services: (store.services || []).filter((s) => sameTenant(s, tenantId)),
-  products: (store.products || []).filter((p) => sameTenant(p, tenantId)),
-  notifications: (store.notifications || []).filter((n) => sameTenant(n, tenantId)),
-  coupons: (store.coupons || []).filter((c) => sameTenant(c, tenantId)),
-  cash:
-    store.cash && sameTenant(store.cash, tenantId)
-      ? store.cash
-      : {
-          isOpen: false,
-          openedAt: null,
-          openingBalance: 0,
-          closedAt: null,
-          closingBalance: 0,
-          movements: [],
-          tenantId,
-        },
-});
+const filterStore = (store, tenantId) => {
+  const config =
+    (store.tenantConfigs && store.tenantConfigs[tenantId]) ||
+    (store.config?.business?.tenantId === tenantId ? store.config : null) ||
+    store.config;
+
+  const cash =
+    (store.cashByTenant && store.cashByTenant[tenantId]) ||
+    (store.cash && sameTenant(store.cash, tenantId) ? store.cash : null) || {
+      isOpen: false,
+      openedAt: null,
+      openingBalance: 0,
+      closedAt: null,
+      closingBalance: 0,
+      movements: [],
+      tenantId,
+    };
+
+  const business = (store.businesses || []).find((b) => b.id === tenantId) || null;
+
+  return {
+    ...store,
+    business,
+    config,
+    cash,
+    users: (store.users || []).filter((u) => sameTenant(u, tenantId)),
+    customers: (store.customers || []).filter((c) => sameTenant(c, tenantId)),
+    orders: (store.orders || []).filter((o) => sameTenant(o, tenantId)),
+    services: (store.services || []).filter((s) => sameTenant(s, tenantId)),
+    products: (store.products || []).filter((p) => sameTenant(p, tenantId)),
+    notifications: (store.notifications || []).filter((n) => sameTenant(n, tenantId)),
+    coupons: (store.coupons || []).filter((c) => sameTenant(c, tenantId)),
+  };
+};
 
 const loadInitialStore = () => {
   try {
@@ -148,16 +162,13 @@ export const AppProvider = ({ children }) => {
       }
 
       const user = store.users.find(
-        (u) =>
-          u.username === username &&
-          u.password === password &&
-          u.active &&
-          sameTenant(u, tenantId)
+        (u) => u.username === username && u.password === password && u.active
       );
 
       if (user) {
         localStorage.removeItem(attemptsKey);
         localStorage.removeItem("lavanet_first_fail_time");
+        if (user.tenantId) setTenant(user.tenantId);
         const updated = { ...user, lastAccess: new Date().toISOString() };
         setStore((prev) => ({
           ...prev,
@@ -172,13 +183,99 @@ export const AppProvider = ({ children }) => {
       if (attempts === 1) localStorage.setItem("lavanet_first_fail_time", new Date().toISOString());
       return { ok: false, error: "Usuario o contraseña inválidos" };
     },
-    [store.users, tenantId, setTenant]
+    [store.users, setTenant]
   );
 
   const logout = useCallback(() => {
     setCurrentUser(null);
     setAuthToken(null);
   }, []);
+
+  const registerAccount = useCallback(
+    async ({ businessName, name, username, email, password }) => {
+      const biz = String(businessName || "").trim();
+      const uname = String(username || "").trim().toLowerCase();
+      if (!biz || !name?.trim() || !uname || !password) {
+        return { ok: false, error: "Completa todos los campos obligatorios" };
+      }
+      if (password.length < 8) {
+        return { ok: false, error: "La contraseña debe tener al menos 8 caracteres" };
+      }
+      if (store.users.some((u) => u.username === uname)) {
+        return { ok: false, error: "Ese nombre de usuario ya está en uso" };
+      }
+      if (email && store.users.some((u) => u.email === email.trim().toLowerCase())) {
+        return { ok: false, error: "Ese email ya está registrado" };
+      }
+
+      if (hasApiBackend()) {
+        try {
+          const { data: res } = await api.post("/api/auth/register", {
+            tenantName: biz,
+            name: name.trim(),
+            username: uname,
+            email: (email || `${uname}@lavanet.local`).trim().toLowerCase(),
+            password,
+          });
+          const user = res?.data?.user;
+          if (res?.token) setAuthToken(res.token);
+          if (user?.tenant) setTenant(String(user.tenant));
+          setCurrentUser(
+            stripPassword({
+              id: user._id || user.id,
+              name: user.name,
+              username: user.username,
+              email: user.email,
+              role: "Administrador",
+              tenantId: String(user.tenant),
+              active: true,
+              isJWT: true,
+            })
+          );
+          return { ok: true };
+        } catch (err) {
+          if (err?.response) {
+            return { ok: false, error: err.response.data?.message || "No se pudo registrar" };
+          }
+        }
+      }
+
+      const tenantIdNew = `biz_${Date.now()}`;
+      const bundle = emptyBusinessBundle(tenantIdNew, biz);
+      const admin = {
+        id: `u_${Date.now()}`,
+        name: name.trim(),
+        username: uname,
+        password,
+        email: (email || `${uname}@lavanet.local`).trim().toLowerCase(),
+        role: "Administrador",
+        active: true,
+        lastAccess: new Date().toISOString(),
+        tenantId: tenantIdNew,
+      };
+
+      setStore((prev) => ({
+        ...prev,
+        businesses: [...(prev.businesses || []), bundle.business],
+        tenantConfigs: {
+          ...(prev.tenantConfigs || {}),
+          [tenantIdNew]: bundle.config,
+        },
+        cashByTenant: {
+          ...(prev.cashByTenant || {}),
+          [tenantIdNew]: bundle.cash,
+        },
+        users: [...(prev.users || []), admin],
+        services: [...(prev.services || []), ...bundle.services],
+        products: [...(prev.products || []), ...bundle.products],
+        notifications: [...bundle.notifications, ...(prev.notifications || [])],
+      }));
+      setTenant(tenantIdNew);
+      setCurrentUser(stripPassword(admin));
+      return { ok: true };
+    },
+    [store.users, setTenant]
+  );
 
   const resetDemo = useCallback(() => {
     const seeded = assignTenantToSeed(initialData(), tenantId || "tenant-1");
@@ -364,10 +461,8 @@ export const AppProvider = ({ children }) => {
 
   const openCash = useCallback(
     (openingBalance) => {
-      setStore((prev) => ({
-        ...prev,
-        cash: {
-          ...prev.cash,
+      setStore((prev) => {
+        const nextCash = {
           isOpen: true,
           openedAt: new Date().toISOString(),
           openingBalance,
@@ -375,47 +470,73 @@ export const AppProvider = ({ children }) => {
           closedAt: null,
           closingBalance: 0,
           tenantId,
-        },
-      }));
+        };
+        return {
+          ...prev,
+          cash: nextCash,
+          cashByTenant: { ...(prev.cashByTenant || {}), [tenantId]: nextCash },
+        };
+      });
     },
     [tenantId]
   );
 
-  const addCashMovement = useCallback((mov) => {
-    setStore((prev) => ({
-      ...prev,
-      cash: {
-        ...prev.cash,
-        movements: [
-          { id: `m${Date.now()}`, at: new Date().toISOString(), ...mov },
-          ...prev.cash.movements,
-        ],
-      },
-    }));
-  }, []);
+  const addCashMovement = useCallback(
+    (mov) => {
+      setStore((prev) => {
+        const current =
+          (prev.cashByTenant && prev.cashByTenant[tenantId]) || prev.cash || {
+            movements: [],
+            tenantId,
+          };
+        const nextCash = {
+          ...current,
+          tenantId,
+          movements: [
+            { id: `m${Date.now()}`, at: new Date().toISOString(), ...mov },
+            ...(current.movements || []),
+          ],
+        };
+        return {
+          ...prev,
+          cash: nextCash,
+          cashByTenant: { ...(prev.cashByTenant || {}), [tenantId]: nextCash },
+        };
+      });
+    },
+    [tenantId]
+  );
 
   const closeCash = useCallback(() => {
     setStore((prev) => {
+      const current =
+        (prev.cashByTenant && prev.cashByTenant[tenantId]) || prev.cash || {
+          openingBalance: 0,
+          movements: [],
+        };
       const closing =
-        prev.cash.openingBalance +
-        prev.cash.movements
+        (current.openingBalance || 0) +
+        (current.movements || [])
           .filter((m) => m.type === "ingreso")
           .reduce((s, m) => s + m.amount, 0) -
-        prev.cash.movements
+        (current.movements || [])
           .filter((m) => m.type === "gasto")
           .reduce((s, m) => s + m.amount, 0);
+      const nextCash = {
+        ...current,
+        tenantId,
+        isOpen: false,
+        closedAt: new Date().toISOString(),
+        closingBalance: closing,
+      };
       return {
         ...prev,
-        cash: {
-          ...prev.cash,
-          isOpen: false,
-          closedAt: new Date().toISOString(),
-          closingBalance: closing,
-        },
+        cash: nextCash,
+        cashByTenant: { ...(prev.cashByTenant || {}), [tenantId]: nextCash },
       };
     });
     addNotification({ title: "Se realizó el cierre de caja", type: "success" });
-  }, [addNotification]);
+  }, [addNotification, tenantId]);
 
   const value = {
     data,
@@ -424,6 +545,7 @@ export const AppProvider = ({ children }) => {
     currentUser,
     login,
     logout,
+    registerAccount,
     resetDemo,
     createOrder,
     updateOrderStatus,

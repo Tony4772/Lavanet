@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { Save, RefreshCw, Mail, Send, Clock } from "lucide-react";
 import { useApp, fmtMoney, fmtDate } from "../context/AppContext";
+import { useTenant } from "../context/TenantContext";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
@@ -12,6 +13,7 @@ import { STATUS_STYLE } from "../lib/seed";
 
 export default function Configuracion() {
   const { data, setData, resetDemo } = useApp();
+  const { tenantId } = useTenant();
   const [cfg, setCfg] = useState(data.config);
   const [schedule, setSchedule] = useState(data.reportSchedule || { enabled: false, email: "", lastSentAt: null, hourOfDay: 22 });
   const currency = data.config.business.currencySymbol;
@@ -28,7 +30,18 @@ export default function Configuracion() {
   }, [data.orders]);
 
   const save = () => {
-    setData(prev => ({ ...prev, config: cfg, reportSchedule: schedule }));
+    setData((prev) => ({
+      ...prev,
+      config: { ...cfg, business: { ...cfg.business, tenantId } },
+      tenantConfigs: {
+        ...(prev.tenantConfigs || {}),
+        [tenantId]: { ...cfg, business: { ...cfg.business, tenantId } },
+      },
+      businesses: (prev.businesses || []).map((b) =>
+        b.id === tenantId ? { ...b, name: cfg.business?.name || b.name } : b
+      ),
+      reportSchedule: schedule,
+    }));
     toast.success("Configuración guardada");
   };
   const reset = () => {

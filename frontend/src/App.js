@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { useApp, canAccess } from "./context/AppContext";
 import AppLayout from "./components/AppLayout";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import POS from "./pages/POS";
 import Ordenes from "./pages/Ordenes";
@@ -37,6 +38,10 @@ function AppRoutes() {
       <Route
         path="/login"
         element={currentUser ? <Navigate to="/" replace /> : <Login />}
+      />
+      <Route
+        path="/register"
+        element={currentUser ? <Navigate to="/" replace /> : <Register />}
       />
       <Route element={<RequireAuth />}>
         <Route element={<AppLayout />}>

@@ -169,12 +169,57 @@ export const SEED_CONFIG = {
   appearance: { primary: "azul", density: "cómoda" },
 };
 
+export const emptyBusinessBundle = (tenantId, businessName) => {
+  const tag = (rows) => rows.map((r) => ({ ...r, tenantId }));
+  return {
+    business: {
+      id: tenantId,
+      name: businessName,
+      createdAt: new Date().toISOString(),
+    },
+    users: [],
+    customers: [],
+    services: tag(SEED_SERVICES.map(({ id, ...rest }) => ({ ...rest, id: `${id}_${tenantId}` }))),
+    products: tag(SEED_PRODUCTS.map(({ id, ...rest }) => ({ ...rest, id: `${id}_${tenantId}` }))),
+    orders: [],
+    cash: { ...SEED_CASH, tenantId },
+    config: {
+      ...SEED_CONFIG,
+      business: {
+        ...SEED_CONFIG.business,
+        name: businessName,
+        tenantId,
+      },
+    },
+    notifications: [
+      {
+        id: `n_welcome_${tenantId}`,
+        title: `Bienvenido a LAVANET — ${businessName}`,
+        type: "success",
+        at: new Date().toISOString(),
+        read: false,
+        tenantId,
+      },
+    ],
+  };
+};
+
 export const initialData = () => ({
+  businesses: [{ id: DEFAULT_TENANT, name: "LAVANET Demo", createdAt: daysAgo(120) }],
+  tenantConfigs: {
+    [DEFAULT_TENANT]: {
+      ...SEED_CONFIG,
+      business: { ...SEED_CONFIG.business, tenantId: DEFAULT_TENANT },
+    },
+  },
   users: SEED_USERS.map((u) => withTenant(u)),
   customers: SEED_CUSTOMERS.map((c) => withTenant(c)),
   services: SEED_SERVICES.map((s) => withTenant(s)),
   products: SEED_PRODUCTS.map((p) => withTenant(p)),
   orders: SEED_ORDERS.map((o) => withTenant(o)),
+  cashByTenant: {
+    [DEFAULT_TENANT]: withTenant({ ...SEED_CASH }),
+  },
   cash: withTenant({ ...SEED_CASH }),
   config: {
     ...SEED_CONFIG,
@@ -189,3 +234,4 @@ export const initialData = () => ({
   coupons: [],
   reportSchedule: { enabled: false, email: "", lastSentAt: null, hourOfDay: 22 },
 });
+

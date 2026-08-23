@@ -18,13 +18,43 @@ export default function Usuarios() {
   const [editing, setEditing] = useState(null);
 
   const save = () => {
-    if (!editing.name.trim() || !editing.username.trim()) { toast.error("Nombre y usuario son requeridos"); return; }
+    if (!editing.name.trim() || !editing.username.trim()) {
+      toast.error("Nombre y usuario son requeridos");
+      return;
+    }
     if (editing.id) {
-      updateCollection("users", prev => prev.map(u => u.id === editing.id ? { ...editing, tenantId: editing.tenantId || tenantId } : u));
+      updateCollection("users", (prev) =>
+        prev.map((u) => {
+          if (u.id !== editing.id) return u;
+          const next = {
+            ...u,
+            name: editing.name,
+            username: editing.username,
+            email: editing.email,
+            role: editing.role,
+            active: editing.active !== false,
+            tenantId: u.tenantId || tenantId,
+          };
+          if (editing.password) next.password = editing.password;
+          return next;
+        })
+      );
       toast.success("Usuario actualizado");
     } else {
-      if (!editing.password || editing.password.length < 8) { toast.error("Contraseña debe tener al menos 8 caracteres"); return; }
-      updateCollection("users", prev => [{ ...editing, id: `u${Date.now()}`, active: true, lastAccess: null, tenantId }, ...prev]);
+      if (!editing.password || editing.password.length < 8) {
+        toast.error("Contraseña debe tener al menos 8 caracteres");
+        return;
+      }
+      updateCollection("users", (prev) => [
+        {
+          ...editing,
+          id: `u${Date.now()}`,
+          active: true,
+          lastAccess: null,
+          tenantId,
+        },
+        ...prev,
+      ]);
       toast.success("Usuario creado");
     }
     setEditing(null);

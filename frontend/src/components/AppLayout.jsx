@@ -6,7 +6,6 @@ import {
   LogOut, Menu, X, ChevronDown, Waves, Workflow,
 } from "lucide-react";
 import { useApp, fmtDate, canAccess } from "../context/AppContext";
-import { useTenant } from "../context/TenantContext";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
@@ -33,14 +32,12 @@ const NAV = [
 
 export default function AppLayout() {
   const { currentUser, logout, data, markNotificationsRead } = useApp();
-  const { tenantId, setTenant } = useTenant();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [q, setQ] = useState("");
-  const [tenantDropdownOpen, setTenantDropdownOpen] = useState(false);
 
   const unread = data.notifications.filter((n) => !n.read).length;
-  const isAdmin = currentUser?.role === "Administrador" || currentUser?.role === "admin";
+  const businessName = data.business?.name || data.config?.business?.name || "LAVANET";
 
   const visibleNav = useMemo(
     () => NAV.filter((item) => canAccess(currentUser?.role, item.to)),
@@ -80,13 +77,6 @@ export default function AppLayout() {
     return results;
   }, [q, data]);
 
-  const handleTenantChange = (id) => {
-    setTenant(id);
-    setTenantDropdownOpen(false);
-    logout();
-    navigate("/login");
-  };
-
   const SidebarContent = () => (
     <>
       <div className="px-6 pt-6 pb-8">
@@ -98,8 +88,8 @@ export default function AppLayout() {
             <div className="text-white font-heading font-extrabold text-lg leading-none tracking-tight">
               LAVANET
             </div>
-            <div className="text-slate-400 text-[10px] uppercase tracking-widest mt-1">
-              POS · ERP
+            <div className="text-slate-400 text-[10px] uppercase tracking-widest mt-1 truncate max-w-[160px]">
+              {businessName}
             </div>
           </div>
         </div>
@@ -140,9 +130,6 @@ export default function AppLayout() {
             </div>
             <div className="text-slate-400 text-xs truncate">{currentUser?.role}</div>
           </div>
-        </div>
-        <div className="mt-2 text-xs text-slate-500">
-          Tenant: <span className="text-blue-400 font-medium">{tenantId}</span>
         </div>
       </div>
     </>
@@ -265,34 +252,9 @@ export default function AppLayout() {
               </PopoverContent>
             </Popover>
 
-            {isAdmin && (
-              <Popover open={tenantDropdownOpen} onOpenChange={setTenantDropdownOpen}>
-                <PopoverTrigger asChild>
-                  <button
-                    data-testid="change-tenant-btn"
-                    className="hidden sm:flex items-center gap-1 px-2 py-1.5 text-xs text-slate-500 hover:bg-slate-100 rounded-md"
-                  >
-                    {tenantId}
-                    <ChevronDown className="w-3 h-3" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-48 p-2">
-                  <p className="text-xs text-slate-500 mb-2 px-1">
-                    Cambiar tenant cierra la sesión
-                  </p>
-                  {["tenant-1", "tenant-2", "tenant-3"].map((id) => (
-                    <button
-                      key={id}
-                      data-testid={id}
-                      onClick={() => handleTenantChange(id)}
-                      className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-slate-50"
-                    >
-                      {id}
-                    </button>
-                  ))}
-                </PopoverContent>
-              </Popover>
-            )}
+            <div className="hidden sm:block text-xs text-slate-500 max-w-[140px] truncate" title={businessName}>
+              {businessName}
+            </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
