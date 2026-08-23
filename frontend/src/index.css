@@ -1,0 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    margin: 0;
+    font-family: 'IBM Plex Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: hsl(210 40% 98%);
+    color: hsl(222 47% 11%);
+}
+
+.font-heading { font-family: 'Manrope', sans-serif; }
+.font-mono-ticket { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+code {
+    font-family: 'JetBrains Mono', Menlo, Monaco, monospace;
+}
+
+@layer base {
+    :root {
+        --background: 210 40% 98%;
+        --foreground: 222 47% 11%;
+        --card: 0 0% 100%;
+        --card-foreground: 222 47% 11%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222 47% 11%;
+        --primary: 221 83% 53%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 210 40% 96%;
+        --secondary-foreground: 222 47% 11%;
+        --muted: 210 40% 96%;
+        --muted-foreground: 215 16% 47%;
+        --accent: 210 40% 96%;
+        --accent-foreground: 222 47% 11%;
+        --destructive: 349 89% 52%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 214 32% 91%;
+        --input: 214 32% 91%;
+        --ring: 221 83% 53%;
+        --chart-1: 221 83% 53%;
+        --chart-2: 152 69% 41%;
+        --chart-3: 38 92% 50%;
+        --chart-4: 262 83% 58%;
+        --chart-5: 349 89% 52%;
+        --radius: 0.5rem;
+        --sidebar-bg: 222 47% 11%;
+    }
+}
+
+@layer base {
+    * { @apply border-border; }
+    body { @apply bg-background text-foreground; }
+    h1, h2, h3, h4 { font-family: 'Manrope', sans-serif; letter-spacing: -0.02em; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: hsl(215 20% 80%); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: hsl(215 20% 65%); }
+
+/* Print styles */
+@media print {
+    .no-print { display: none !important; }
+
+    body.print-mode-ticket * { visibility: hidden; }
+    body.print-mode-ticket #print-ticket, body.print-mode-ticket #print-ticket * { visibility: visible; }
+    body.print-mode-ticket #print-ticket {
+        position: absolute;
+        left: 0; top: 0;
+        width: 80mm;
+        padding: 4mm;
+        font-family: 'JetBrains Mono', monospace;
+        color: #000;
+        background: #fff;
+    }
+
+    body.print-mode-report * { visibility: hidden; }
+    body.print-mode-report #print-report, body.print-mode-report #print-report * { visibility: visible; }
+    body.print-mode-report #print-report {
+        position: absolute;
+        left: 0; top: 0;
+        width: 100%;
+        padding: 10mm;
+        background: #fff;
+        color: #000;
+    }
+    @page { margin: 8mm; }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeInUp { animation: fadeInUp 0.25s ease-out both; }
+
+@layer base {
+    [data-debug-wrapper="true"] { display: contents !important; }
+    [data-debug-wrapper="true"] > * {
+        margin-left: inherit; margin-right: inherit;
+        margin-top: inherit; margin-bottom: inherit;
+        padding-left: inherit; padding-right: inherit;
+        padding-top: inherit; padding-bottom: inherit;
+        column-gap: inherit; row-gap: inherit; gap: inherit;
+        border-left-width: inherit; border-right-width: inherit;
+        border-top-width: inherit; border-bottom-width: inherit;
+        border-left-style: inherit; border-right-style: inherit;
+        border-top-style: inherit; border-bottom-style: inherit;
+        border-left-color: inherit; border-right-color: inherit;
+        border-top-color: inherit; border-bottom-color: inherit;
+    }
+}

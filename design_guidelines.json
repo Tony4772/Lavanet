@@ -1,0 +1,151 @@
+{
+  "theme": {
+    "mode": "light",
+    "rationale": "User requested white and light gray backgrounds. A light theme is essential for a data-dense ERP/POS used in bright retail or industrial laundry environments to reduce eye strain and maintain high visibility."
+  },
+  "typography": {
+    "fonts": {
+      "headings": {
+        "family": "Manrope",
+        "weights": ["600", "800"],
+        "css_import": "@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@600;800&display=swap');",
+        "rationale": "Manrope gives a geometric, premium SaaS look without being overused like Inter."
+      },
+      "body": {
+        "family": "IBM Plex Sans",
+        "weights": ["400", "500", "600"],
+        "css_import": "@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap');",
+        "rationale": "Highly legible for dense data, tables, and financial numbers."
+      },
+      "monospace": {
+        "family": "JetBrains Mono",
+        "weights": ["400", "700"],
+        "css_import": "@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');",
+        "usage": "Used exclusively for POS Ticket 80mm layout, financial IDs, order numbers, and tracking codes."
+      }
+    },
+    "hierarchy": {
+      "h1": "text-3xl md:text-4xl font-extrabold tracking-tight",
+      "h2": "text-2xl font-bold tracking-tight",
+      "h3": "text-lg font-semibold",
+      "body": "text-sm text-slate-600",
+      "small": "text-xs text-slate-500 font-medium uppercase tracking-wider"
+    }
+  },
+  "colors": {
+    "css_variables": {
+      "--primary": "221 83% 53%",
+      "--primary-hover": "221 83% 43%",
+      "--sidebar-bg": "222 47% 11%",
+      "--sidebar-text": "215 20% 65%",
+      "--sidebar-active": "0 0% 100%",
+      "--background-app": "210 40% 98%",
+      "--surface-card": "0 0% 100%",
+      "--success": "152 69% 31%",
+      "--warning": "38 92% 50%",
+      "--error": "349 89% 52%",
+      "--info": "221 83% 53%"
+    },
+    "palette": {
+      "primary": {
+        "DEFAULT": "hsl(var(--primary))",
+        "hex": "#1A56DB",
+        "usage": "Main CTA buttons, active state indicators, primary data visualizations"
+      },
+      "sidebar": {
+        "background": "#0F172A",
+        "text": "#94A3B8",
+        "active": "#FFFFFF",
+        "accent": "#3B82F6"
+      },
+      "status": {
+        "success": { "bg": "#D1FAE5", "text": "#065F46", "border": "#34D399" },
+        "warning": { "bg": "#FEF3C7", "text": "#92400E", "border": "#FBBF24" },
+        "error": { "bg": "#FFE4E6", "text": "#9F1239", "border": "#FDA4AF" },
+        "info": { "bg": "#DBEAFE", "text": "#1E40AF", "border": "#93C5FD" }
+      }
+    }
+  },
+  "layout_and_spacing": {
+    "grid_system": {
+      "dashboard": "High Density Grid. grid-cols-1 md:grid-cols-3 lg:grid-cols-4 with gap-4 or gap-6. All cards must be h-full.",
+      "pos_split": "Split layout on desktop: Left side (Services Catalog) takes col-span-8. Right side (Cart/Summary/Payment) takes col-span-4. Total 12 columns."
+    },
+    "spacing_scale": "Use padding generously inside cards (p-6) to prevent text collision. Use gap-4 for related items, gap-8 for distinct sections."
+  },
+  "components": {
+    "sidebar": {
+      "style": "Fixed on desktop, hidden on mobile (use hamburger menu). Deep navy background (#0F172A).",
+      "items": "Icon + Text. Inactive text is slate-400. Active item gets white text and a subtle left-border or background highlight using the primary color.",
+      "bottom": "User profile summary (Avatar, Name, Role) fixed at the bottom."
+    },
+    "topbar": {
+      "style": "Sticky top, bg-white, 1px bottom border (border-slate-200). h-16.",
+      "contents": "Global Search bar (left-aligned), Notification Bell (with red dot for unread), and a quick 'New Order' primary button."
+    },
+    "cards": {
+      "style": "Flat solid backgrounds (bg-white). 1px border-slate-200. rounded-xl. NO heavy shadows, only subtle shadow-sm.",
+      "hover": "Slight lift (-translate-y-0.5) and shadow-md for interactive cards only."
+    },
+    "buttons": {
+      "primary": "bg-blue-600 text-white rounded-lg px-4 py-2 font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2",
+      "outline": "border border-slate-300 bg-transparent text-slate-700 rounded-lg px-4 py-2 font-medium hover:bg-slate-50 flex items-center gap-2",
+      "icon_buttons": "p-2 rounded-md hover:bg-slate-100 text-slate-500 hover:text-blue-600 transition-colors"
+    },
+    "status_badges": {
+      "shape": "rounded-full px-2.5 py-0.5 text-xs font-semibold border",
+      "states": {
+        "Recepción": "bg-slate-100 text-slate-700 border-slate-200",
+        "Clasificación": "bg-indigo-100 text-indigo-700 border-indigo-200",
+        "Lavado": "bg-blue-100 text-blue-700 border-blue-200",
+        "Secado": "bg-yellow-100 text-yellow-800 border-yellow-200",
+        "Planchado": "bg-orange-100 text-orange-800 border-orange-200",
+        "Control de calidad": "bg-purple-100 text-purple-700 border-purple-200",
+        "Lista": "bg-emerald-100 text-emerald-700 border-emerald-200",
+        "Entregada": "bg-slate-800 text-white border-slate-900",
+        "Cancelada": "bg-rose-100 text-rose-700 border-rose-200"
+      }
+    },
+    "pos_ticket_80mm": {
+      "style": "Strict width max-w-[300px] mx-auto bg-white text-black p-4 font-mono text-xs border border-slate-200 shadow-sm",
+      "typography": "JetBrains Mono or standard monospace. Use uppercase for headers.",
+      "layout": "Flexbox/Grid for aligning Item Name (Left) and Price (Right). Dashed borders for separators (border-dashed border-b border-black).",
+      "actions": "Must include a 'Print' button outside the ticket container."
+    },
+    "tables": {
+      "style": "Modern clean tables. No vertical borders. Subdued horizontal borders (border-slate-100). Hover effect on rows (hover:bg-slate-50).",
+      "headers": "Uppercase, text-xs, font-semibold, text-slate-500, bg-slate-50/50 p-3."
+    }
+  },
+  "motion_and_interactions": {
+    "general": "Keep animations snappy. This is an ERP, users value speed over flashy delays.",
+    "hover": "Use transition-colors duration-200 for all buttons and rows.",
+    "modals": "Fade in with a slight scale-up (0.95 to 1). backdrop-blur-sm on the overlay.",
+    "toast": "Slide in from bottom-right. Use 'sonner' library. Auto-dismiss after 3-5 seconds."
+  },
+  "images": {
+    "login_background": {
+      "url": "https://images.unsplash.com/photo-1547104442-044448b73426?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwxfHxjbGVhbiUyMGZvbGRlZCUyMHdoaXRlJTIwbGluZW4lMjBtaW5pbWFsfGVufDB8fHx8MTc4NjM0NzUzNXww&ixlib=rb-4.1.0&q=85",
+      "description": "Clean folded white linen, used as a subtle, premium background for the login page."
+    },
+    "user_avatars": [
+      {
+        "url": "https://images.unsplash.com/photo-1560250097-0b93528c311a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBvZmZpY2UlMjB3b3JrZXIlMjBwb3J0cmFpdHxlbnwwfHx8fDE3ODYzNDc1Mzl8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Professional male office worker avatar"
+      },
+      {
+        "url": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1Nzd8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBvZmZpY2UlMjB3b3JrZXIlMjBwb3J0cmFpdHxlbnwwfHx8fDE3ODYzNDc1Mzl8MA&ixlib=rb-4.1.0&q=85",
+        "description": "Professional female office worker avatar"
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "This is a premium SaaS ERP. DO NOT make it look like a generic Bootstrap template.",
+    "Use Lucide React for all iconography.",
+    "Implement the fixed sidebar on desktop. Ensure main content has ml-64 (or equivalent) to not hide under the sidebar.",
+    "For the POS view, ensure the right-side cart is fixed/sticky so it remains visible while scrolling through the services catalog.",
+    "The 80mm ticket must be styled entirely with CSS and printable using window.print() targeting only the ticket area (or hiding everything else with print media queries).",
+    "All interactive elements MUST include a data-testid attribute (e.g., data-testid='pos-checkout-btn').",
+    "Apply Shadcn/UI for modals, dropdowns, and toast (Sonner), but customize the borders and padding to match the clean, flat look specified above."
+  ]
+}
