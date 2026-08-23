@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /pos
+Disallow: /caja
+Disallow: /usuarios
+Disallow: /configuracion
+Disallow: /inventario
+Disallow: /turno
+
+Sitemap: https://lavanet.ebyzom.com/sitemap.xml
