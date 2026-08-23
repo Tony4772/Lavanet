@@ -57,12 +57,12 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <div className="flex-1 grid lg:grid-cols-2">
+    <div className="min-h-screen lg:h-svh lg:overflow-hidden bg-slate-50 flex flex-col">
+      <div className="flex-1 min-h-0 grid lg:grid-cols-2">
       <div className="hidden lg:flex relative bg-black items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-brand-dark/40" />
         <div className="relative z-10 px-12 max-w-lg text-center">
-          <BrandLogo size="heroDesktop" className="mb-10 mx-auto" />
+          <BrandLogo imgClassName="h-28 w-auto mx-auto" className="mb-10 mx-auto" />
           <h1 className="text-white font-heading text-4xl xl:text-5xl font-extrabold leading-tight tracking-tight">
             La gestión de tu lavandería,
             <br />
@@ -76,8 +76,8 @@ export default function Login() {
 
       <div className="flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md">
-          <div className="lg:hidden mb-4 flex justify-center">
-            <BrandLogo size="hero" imgClassName="max-h-[120px] w-auto" />
+          <div className="lg:hidden mb-8 flex justify-center">
+            <BrandLogo size="hero" />
           </div>
 
           <h2 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">
