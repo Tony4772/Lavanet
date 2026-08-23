@@ -5,7 +5,8 @@ import {
   Search, Plus, Minus, X, ShoppingCart, User, UserPlus, Trash2,
   Percent, Printer, CheckCircle2, Ticket as TicketIcon,
 } from "lucide-react";
-import { useApp, useTenant, fmtMoney, fmtDate } from "../context/AppContext";
+import { useApp, fmtMoney, fmtDate } from "../context/AppContext";
+import { useTenant } from "../context/TenantContext";
 import { SERVICE_CATEGORIES, PAYMENT_METHODS } from "../lib/seed";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";

@@ -8,7 +8,8 @@ import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
   BarChart, Bar, PieChart, Pie, Cell, Legend, CartesianGrid,
 } from "recharts";
-import { useTenant, fmtMoney, fmtDate } from "../context/AppContext";
+import { useApp, fmtMoney, fmtDate } from "../context/AppContext";
+import { useTenant } from "../context/TenantContext";
 import { StatusBadge } from "../components/StatusBadge";
 import { Button } from "../components/ui/button";
 
@@ -45,6 +46,7 @@ const KpiCard = ({ label, value, hint, delta, icon: Icon, tone = "blue", testId 
 const CHART_COLORS = ["#1A56DB", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4", "#EF4444"];
 
 export default function Dashboard() {
+  const { data, currentUser } = useApp();
   const { tenantId } = useTenant();
   const navigate = useNavigate();
 

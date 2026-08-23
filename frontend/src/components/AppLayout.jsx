@@ -5,7 +5,8 @@ import {
   Warehouse, Truck, Wallet, BarChart3, UserCog, Settings, Bell, Search,
   LogOut, Menu, X, ChevronDown, Waves, Workflow,
 } from "lucide-react";
-import { useTenant, useApp, fmtDate } from "../context/AppContext";
+import { useApp, fmtDate } from "../context/AppContext";
+import { useTenant } from "../context/TenantContext";
 import {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator,
