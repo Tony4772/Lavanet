@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { User, Lock, ArrowRight, Play, MessageCircle } from "lucide-react";
@@ -19,17 +19,6 @@ export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const html = document.documentElement;
-    const { body } = document;
-    html.classList.add("overflow-hidden");
-    body.classList.add("overflow-hidden");
-    return () => {
-      html.classList.remove("overflow-hidden");
-      body.classList.remove("overflow-hidden");
-    };
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,105 +57,105 @@ export default function Login() {
   };
 
   return (
-    <div className="h-dvh max-h-dvh overflow-hidden bg-slate-50 flex flex-col">
+    <div className="h-svh overflow-hidden bg-slate-50 flex flex-col">
       <div className="flex-1 min-h-0 grid lg:grid-cols-2">
-      <div className="hidden lg:flex relative bg-black items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-brand-dark/40" />
-        <div className="relative z-10 px-12 max-w-lg text-center">
-          <BrandLogo size="heroDesktop" className="mb-6 mx-auto" />
-          <h1 className="text-white font-heading text-3xl xl:text-4xl font-extrabold leading-tight tracking-tight">
-            La gestión de tu lavandería,
-            <br />
-            <span className="text-brand-light">simple y poderosa.</span>
-          </h1>
-          <p className="text-brand-muted mt-4 text-base xl:text-lg leading-relaxed">
-            Órdenes, POS, caja, inventario y reportes para lavanderías modernas.
-          </p>
-        </div>
-      </div>
-
-      <div className="flex min-h-0 items-center justify-center px-5 py-4 lg:p-12">
-        <div className="w-full max-w-md">
-          <div className="lg:hidden mb-4 flex justify-center">
-            <BrandLogo size="hero" />
-          </div>
-
-          <h2 className="font-heading text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            Iniciar sesión
-          </h2>
-          <p className="text-slate-500 mt-1.5 sm:mt-2 text-xs sm:text-sm leading-snug sm:leading-relaxed">
-            ¿Quieres contratar lavanet?{" "}
-            <a
-              href={`https://wa.me/${WHATSAPP}?text=${WHATSAPP_MSG}`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-brand font-semibold hover:underline inline-flex items-center gap-1"
-            >
-              <MessageCircle className="w-3.5 h-3.5" /> WhatsApp 906 591 037
-            </a>
-          </p>
-
-          <form onSubmit={handleSubmit} className="mt-5 sm:mt-8 space-y-4 sm:space-y-5">
-            <div>
-              <Label className="text-slate-700 text-sm">Usuario</Label>
-              <div className="relative mt-1.5">
-                <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <Input
-                  data-testid="login-username"
-                  className="pl-9 h-11"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-            <div>
-              <Label className="text-slate-700 text-sm">Contraseña</Label>
-              <div className="relative mt-1.5">
-                <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <Input
-                  data-testid="login-password"
-                  type="password"
-                  className="pl-9 h-11"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-            <Button
-              data-testid="login-submit"
-              type="submit"
-              disabled={loading}
-              className="w-full h-11 gap-2 font-semibold"
-            >
-              {loading ? "Ingresando..." : (
-                <>
-                  Entrar <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </Button>
-          </form>
-
-          <div className="mt-4 sm:mt-6 space-y-2 sm:space-y-3">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={loading}
-              onClick={enterDemo}
-              className="w-full h-11 gap-2 border-brand text-brand hover:bg-brand-soft"
-            >
-              <Play className="w-4 h-4" /> Probar demo
-            </Button>
-            <p className="text-[11px] text-center text-slate-400">
-              Cuenta demo compartida con datos de ejemplo. Para tu negocio, contrata por WhatsApp.
+        <div className="hidden lg:flex relative bg-black items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-brand-dark/40" />
+          <div className="relative z-10 px-12 max-w-lg text-center">
+            <BrandLogo size="heroDesktop" className="mb-10 mx-auto" />
+            <h1 className="text-white font-heading text-4xl xl:text-5xl font-extrabold leading-tight tracking-tight">
+              La gestión de tu lavandería,
+              <br />
+              <span className="text-brand-light">simple y poderosa.</span>
+            </h1>
+            <p className="text-brand-muted mt-6 text-lg leading-relaxed">
+              Órdenes, POS, caja, inventario y reportes para lavanderías modernas.
             </p>
           </div>
         </div>
-      </div>
+
+        <div className="flex items-center justify-center p-6 lg:p-12">
+          <div className="w-full max-w-md">
+            <div className="lg:hidden mb-8 flex justify-center">
+              <BrandLogo size="hero" />
+            </div>
+
+            <h2 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">
+              Iniciar sesión
+            </h2>
+            <p className="text-slate-500 mt-2 text-sm leading-relaxed">
+              ¿Quieres contratar lavanet?{" "}
+              <a
+                href={`https://wa.me/${WHATSAPP}?text=${WHATSAPP_MSG}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-brand font-semibold hover:underline inline-flex items-center gap-1"
+              >
+                <MessageCircle className="w-3.5 h-3.5" /> WhatsApp 906 591 037
+              </a>
+            </p>
+
+            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+              <div>
+                <Label className="text-slate-700 text-sm">Usuario</Label>
+                <div className="relative mt-1.5">
+                  <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    data-testid="login-username"
+                    className="pl-9 h-11"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <Label className="text-slate-700 text-sm">Contraseña</Label>
+                <div className="relative mt-1.5">
+                  <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    data-testid="login-password"
+                    type="password"
+                    className="pl-9 h-11"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+              <Button
+                data-testid="login-submit"
+                type="submit"
+                disabled={loading}
+                className="w-full h-11 gap-2 font-semibold"
+              >
+                {loading ? "Ingresando..." : (
+                  <>
+                    Entrar <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 space-y-3">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading}
+                onClick={enterDemo}
+                className="w-full h-11 gap-2 border-brand text-brand hover:bg-brand-soft"
+              >
+                <Play className="w-4 h-4" /> Probar demo
+              </Button>
+              <p className="text-[11px] text-center text-slate-400">
+                Cuenta demo compartida con datos de ejemplo. Para tu negocio, contrata por WhatsApp.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <SiteFooter compact />
+      <SiteFooter />
     </div>
   );
 }
