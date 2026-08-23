@@ -53,6 +53,7 @@ mountTenantRoutes(app, "/api/products", require("./routes/products"));
 mountTenantRoutes(app, "/api/config", require("./routes/config"));
 mountTenantRoutes(app, "/api/cash", require("./routes/cash"));
 mountTenantRoutes(app, "/api/coupons", require("./routes/coupons"));
+mountTenantRoutes(app, "/api/sunat", require("./routes/sunat"));
 
 if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "..", "frontend", "build");

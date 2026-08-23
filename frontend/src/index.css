@@ -6,6 +6,11 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
 body {
     margin: 0;
     font-family: 'IBM Plex Sans', system-ui, sans-serif;
@@ -13,6 +18,10 @@ body {
     -moz-osx-font-smoothing: grayscale;
     background-color: hsl(210 40% 98%);
     color: hsl(222 47% 11%);
+}
+
+.safe-area-pb {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .font-heading { font-family: 'Manrope', sans-serif; }

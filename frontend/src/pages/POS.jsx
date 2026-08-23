@@ -7,6 +7,7 @@ import {
 import { useApp, fmtMoney, fmtDate } from "../context/AppContext";
 import { useTenant } from "../context/TenantContext";
 import { SERVICE_CATEGORIES, PAYMENT_METHODS } from "../lib/seed";
+import { api, hasApiBackend } from "../lib/api";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
@@ -14,6 +15,7 @@ import { Textarea } from "../components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import Ticket from "../components/Ticket";
+import { Switch } from "../components/ui/switch";
 
 export default function POS() {
   const { data, updateCollection, createOrder, addCashMovement, findCoupon, redeemCoupon } = useApp();
@@ -38,6 +40,10 @@ export default function POS() {
   const [pointsToRedeem, setPointsToRedeem] = useState(0);
   const [couponInput, setCouponInput] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [emitSunat, setEmitSunat] = useState(false);
+  const [cpeType, setCpeType] = useState("03");
+  const [clientDoc, setClientDoc] = useState("");
+  const [invoiceLabel, setInvoiceLabel] = useState("");
 
   const filteredServices = useMemo(() => {
     const tenantFilter = tenantId ? s => s.tenantId === tenantId : s => true;
@@ -113,10 +119,14 @@ export default function POS() {
     toast.success(`Cliente ${c.name} creado`);
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) { toast.error("El carrito está vacío"); return; }
     if (!customer) { toast.error("Selecciona o crea un cliente"); return; }
     if (paymentMethod === "Efectivo" && (Number(amountPaid) || 0) < total) { toast.error("Monto insuficiente"); return; }
+    if (emitSunat && cpeType === "01" && String(clientDoc).replace(/\D/g, "").length !== 11) {
+      toast.error("Factura requiere RUC del cliente (11 dígitos)");
+      return;
+    }
 
     const promised = new Date();
     promised.setDate(promised.getDate() + 2);
@@ -136,16 +146,36 @@ export default function POS() {
       promisedAt: promised.toISOString(),
       tenantId,
     });
-    // Redeem coupon if applied
     if (appliedCoupon) redeemCoupon(appliedCoupon.code, order.number);
-    // Register cash movement if cash is open
     if (data.cash.isOpen) {
       addCashMovement({ type: "ingreso", amount: total, note: `Venta ${order.number}`, method: paymentMethod });
     }
+
+    let cpe = "";
+    if (emitSunat && hasApiBackend()) {
+      try {
+        const { data: res } = await api.post("/api/sunat/emit", {
+          orderId: order.id || order.number,
+          orderNumber: order.number,
+          tipoDoc: cpeType,
+          clientDocType: cpeType === "01" ? "6" : "1",
+          clientDocNumber: clientDoc || (cpeType === "01" ? "" : "00000000"),
+          clientName: customer.name,
+          discount,
+          items: cart,
+        });
+        cpe = res?.data?.invoice?.label || "";
+        if (res.status === "success") toast.success(`CPE ${cpe} emitido`);
+        else toast.error(res.message || "SUNAT rechazó el comprobante");
+      } catch (err) {
+        toast.error(err?.response?.data?.message || "Error emitiendo CPE (venta ya registrada)");
+      }
+    }
+
+    setInvoiceLabel(cpe);
     setCreatedOrder(order);
     setConfirmOpen(true);
-    // reset
-    setCart([]); setCustomer(null); setCustomerSearch(""); setDiscountPct(0); setNotes(""); setAmountPaid(""); setPointsToRedeem(0); setAppliedCoupon(null); setCouponInput("");
+    setCart([]); setCustomer(null); setCustomerSearch(""); setDiscountPct(0); setNotes(""); setAmountPaid(""); setPointsToRedeem(0); setAppliedCoupon(null); setCouponInput(""); setClientDoc("");
   };
 
   return (
@@ -156,7 +186,7 @@ export default function POS() {
           <div className="flex flex-col md:flex-row gap-3 md:items-center">
             <div className="relative flex-1">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <Input data-testid="pos-search-service" placeholder="Buscar servicio..." value={searchService} onChange={(e) => setSearchService(e.target.value)} className="pl-9 h-10" />
+              <Input data-testid="pos-search-service" placeholder="Buscar servicio..." value={searchService} onChange={(e) => setSearchService(e.target.value)} className="pl-9 h-11 text-base" />
             </div>
             <div className="flex gap-2 overflow-x-auto pb-1">
               {["Todas", ...SERVICE_CATEGORIES].map(c => (
@@ -335,12 +365,40 @@ export default function POS() {
             {paymentMethod === "Efectivo" && (
               <div>
                 <Label className="text-xs uppercase tracking-wider text-slate-500 font-semibold">Recibido</Label>
-                <Input data-testid="pos-amount-paid" type="number" placeholder="0.00" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} className="h-9 mt-1" />
+                <Input data-testid="pos-amount-paid" type="number" placeholder="0.00" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} className="h-11 mt-1 text-base" inputMode="decimal" />
                 {amountPaid && <div className="text-xs text-emerald-600 mt-1 font-semibold">Vuelto: {fmtMoney(change, currency)}</div>}
               </div>
             )}
 
-            <Button data-testid="pos-checkout" onClick={handleCheckout} className="w-full h-11 bg-brand hover:bg-brand-dark font-semibold mt-2">
+            <div className="border border-slate-200 rounded-lg p-3 space-y-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm">Emitir boleta/factura SUNAT</Label>
+                  <p className="text-[10px] text-slate-500">Opcional — requiere SUNAT activo en Ajustes</p>
+                </div>
+                <Switch checked={emitSunat} onCheckedChange={setEmitSunat} />
+              </div>
+              {emitSunat && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Select value={cpeType} onValueChange={setCpeType}>
+                    <SelectTrigger className="h-11"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="03">Boleta</SelectItem>
+                      <SelectItem value="01">Factura</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    className="h-11"
+                    placeholder={cpeType === "01" ? "RUC cliente" : "DNI (opcional)"}
+                    value={clientDoc}
+                    onChange={(e) => setClientDoc(e.target.value)}
+                    inputMode="numeric"
+                  />
+                </div>
+              )}
+            </div>
+
+            <Button data-testid="pos-checkout" onClick={handleCheckout} className="w-full h-12 bg-brand hover:bg-brand-dark font-semibold mt-2 text-base">
               <CheckCircle2 className="w-4 h-4 mr-2" /> Cobrar y generar orden
             </Button>
           </div>
@@ -378,6 +436,7 @@ export default function POS() {
               <div className="flex justify-between items-center text-sm px-4 py-3"><span className="text-slate-500">Cliente</span><span className="font-semibold text-right">{createdOrder.customerName}</span></div>
               <div className="flex justify-between items-center text-sm px-4 py-3"><span className="text-slate-500">Total</span><span className="font-heading font-extrabold text-lg">{fmtMoney(createdOrder.total, currency)}</span></div>
               <div className="flex justify-between items-center text-sm px-4 py-3"><span className="text-slate-500">Método</span><span className="font-semibold">{createdOrder.paymentMethod}</span></div>
+              {invoiceLabel && <div className="flex justify-between items-center text-sm px-4 py-3"><span className="text-slate-500">CPE</span><span className="font-mono font-semibold text-brand">{invoiceLabel}</span></div>}
               <div className="flex justify-between items-center text-sm px-4 py-3"><span className="text-slate-500">Entrega</span><span className="font-semibold">{fmtDate(createdOrder.promisedAt, true)}</span></div>
             </div>
           )}

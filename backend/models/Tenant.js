@@ -10,10 +10,14 @@ const SunatSchema = new mongoose.Schema(
     solUser: String,
     solPass: { type: String, select: false },
     certificatePassword: { type: String, select: false },
+    /** Certificado .p12 en base64 (no path en disco) */
+    certificateP12: { type: String, select: false },
     certificatePath: String,
     environment: { type: String, enum: ["beta", "produccion"], default: "beta" },
     seriesInvoice: { type: String, default: "F001" },
     seriesBoleta: { type: String, default: "B001" },
+    nextInvoice: { type: Number, default: 1 },
+    nextBoleta: { type: Number, default: 1 },
   },
   { _id: false }
 );

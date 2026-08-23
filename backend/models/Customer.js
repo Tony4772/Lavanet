@@ -21,6 +21,15 @@ const CustomerSchema = new Schema({
     type: String,
     trim: true,
   },
+  docType: {
+    type: String,
+    enum: ["1", "6", "4", "0"],
+    default: "1",
+  },
+  docNumber: {
+    type: String,
+    trim: true,
+  },
   tenant: {
     type: Schema.Types.ObjectId,
     ref: "Tenant",
