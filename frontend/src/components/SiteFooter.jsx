@@ -6,7 +6,7 @@ const YEAR = new Date().getFullYear();
 export default function SiteFooter({ className = "" }) {
   return (
     <footer
-      className={`shrink-0 border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 text-xs text-slate-500 ${className}`}
+      className={`border-t border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 text-xs text-slate-500 ${className}`}
       data-testid="site-footer"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">

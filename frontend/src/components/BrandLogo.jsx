@@ -15,9 +15,9 @@ const SIZE_CLASS = {
   /** Cabeceras internas (superadmin, legal) */
   panel: "w-[210px] sm:w-[228px] h-auto",
   /** Login / registro móvil */
-  hero: "w-[min(100%,280px)] h-auto",
+  hero: "w-[min(100%,340px)] h-auto",
   /** Login / registro panel izquierdo escritorio */
-  heroDesktop: "w-[320px] max-w-full h-auto",
+  heroDesktop: "w-[400px] max-w-full h-auto",
 };
 
 export default function BrandLogo({
