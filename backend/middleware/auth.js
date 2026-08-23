@@ -1,129 +1,90 @@
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
+const User = require("../models/User");
 
-// Generar y asignar token JWT
-const signToken = (id) => jwt.sign({ id }, process.env.JWT_SECRET, {
-  expiresIn: process.env.JWT_EXPIRES_IN || "90d",
-});
+const signToken = (user) =>
+  jwt.sign(
+    { id: user._id, tenant: user.tenant, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
+  );
 
-// Crear y enviar token de respuesta
 const createSendToken = (user, statusCode, res) => {
-  const token = signToken(user._id);
-  const cookieOptions = {
-    expires: new Date(
-      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
-    ),
+  const token = signToken(user);
+  const days = Number(process.env.JWT_COOKIE_EXPIRES_IN || 1);
+  res.cookie("jwt", token, {
+    expires: new Date(Date.now() + days * 24 * 60 * 60 * 1000),
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-  };
-  res.cookie("jwt", token, cookieOptions);
-  user.password = undefined; // No enviar password en la respuesta
+    sameSite: "lax",
+  });
+
+  const safeUser = user.toObject ? user.toObject() : { ...user };
+  delete safeUser.password;
+
   res.status(statusCode).json({
     status: "success",
     token,
-    data: {
-      user,
-    },
+    data: { user: safeUser },
   });
 };
 
-// Middleware de protección de rutas
+exports.signToken = signToken;
+exports.createSendToken = createSendToken;
+
 exports.protect = async (req, res, next) => {
   try {
-    // 1) Obtener token y verificar si existe
     let token;
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
-    ) {
+    if (req.headers.authorization?.startsWith("Bearer ")) {
       token = req.headers.authorization.split(" ")[1];
-    } else if (req.cookies.jwt) {
+    } else if (req.cookies?.jwt) {
       token = req.cookies.jwt;
     }
 
     if (!token) {
       return res.status(401).json({
         status: "fail",
-        message: "No has iniciado sesión, inicia sesión para obtener acceso",
+        message: "No has iniciado sesión",
       });
     }
 
-    // 2) Verificación del token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // 3) Verificar si el usuario sigue existiendo
-    const currentUser = await User.findById(decoded.id);
-    if (!currentUser) {
+    const currentUser = await User.findById(decoded.id).select("+password");
+    if (!currentUser || !currentUser.isActive) {
       return res.status(401).json({
         status: "fail",
-        message: "El usuario de este token ya no existe",
+        message: "El usuario de este token ya no existe o está inactivo",
       });
     }
 
-    // 4) Verificar si el usuario cambió la contraseña después de emitir el token
-    // (Aquí podríamos añadir lógica adicional)
-
-    // Añadir usuario actual a req objeto para uso en rutas posteriores
     req.user = currentUser;
+    req.tenantId = currentUser.tenant?.toString();
     next();
   } catch (err) {
-    res.status(401).json({
+    return res.status(401).json({
       status: "fail",
       message: "Token no válido o ha expirado",
     });
   }
 };
 
-// Middleware de autorización (solo roles específicos)
-exports.authorize = (...roles) => {
-  return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({
-        status: "fail",
-        message: "No tienes permiso para realizar esta acción",
-      });
-    }
-    next();
-  };
-};
-
-// Middleware para verificar tenant del usuario
-exports.verifyTenant = async (req, res, next) => {
-  try {
-    const { tenantId } = req.body;
-    if (!tenantId) {
-      return res.status(400).json({
-        status: "fail",
-        message: "ID de tenant es requerido",
-      });
-    }
-
-    // Verificar que el usuario pertenece a este tenant
-    if (req.user.tenant.toString() !== tenantId) {
-      return res.status(403).json({
-        status: "fail",
-        message: "No tienes acceso a este tenant",
-      });
-    }
-
-    req.tenantId = tenantId;
-    next();
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+exports.authorize = (...roles) => (req, res, next) => {
+  if (!req.user || !roles.includes(req.user.role)) {
+    return res.status(403).json({
+      status: "fail",
+      message: "No tienes permiso para realizar esta acción",
+    });
   }
-};
-
-// Encriptar contraseña antes de guardar
-UserSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
-  const salt = await bcrypt.genSalt(12);
-  this.password = await bcrypt.hash(this.password, salt);
   next();
-});
-
-// Comparar contraseña login
-UserSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = mongoose.model("User", UserSchema);
+/** Sets req.tenantId from the authenticated user (never from client body). */
+exports.verifyTenant = (req, res, next) => {
+  if (!req.user?.tenant) {
+    return res.status(403).json({
+      status: "fail",
+      message: "Usuario sin tenant asignado",
+    });
+  }
+  req.tenantId = req.user.tenant.toString();
+  next();
+};

@@ -41,11 +41,15 @@ const daysAhead = (n) => {
   return d.toISOString();
 };
 
+export const DEFAULT_TENANT = "tenant-1";
+
+const withTenant = (row, tenantId = DEFAULT_TENANT) => ({ ...row, tenantId });
+
 export const SEED_USERS = [
-  { id: "u1", name: "Carlos Mendoza", username: "admin", password: "admin123", email: "admin@lavanet.pe", role: "Administrador", active: true, lastAccess: daysAgo(0) },
-  { id: "u2", name: "María Torres", username: "cajero", password: "cajero123", email: "maria@lavanet.pe", role: "Cajero", active: true, lastAccess: daysAgo(1) },
-  { id: "u3", name: "Jorge Ramírez", username: "recepcion", password: "recepcion123", email: "jorge@lavanet.pe", role: "Recepción", active: true, lastAccess: daysAgo(2) },
-  { id: "u4", name: "Lucía Vargas", username: "operador", password: "operador123", email: "lucia@lavanet.pe", role: "Operador", active: true, lastAccess: daysAgo(5) },
+  { id: "u1", name: "Carlos Mendoza", username: "admin", password: "admin123", email: "admin@lavanet.pe", role: "Administrador", active: true, lastAccess: daysAgo(0), tenantId: DEFAULT_TENANT },
+  { id: "u2", name: "María Torres", username: "cajero", password: "cajero123", email: "maria@lavanet.pe", role: "Cajero", active: true, lastAccess: daysAgo(1), tenantId: DEFAULT_TENANT },
+  { id: "u3", name: "Jorge Ramírez", username: "recepcion", password: "recepcion123", email: "jorge@lavanet.pe", role: "Recepción", active: true, lastAccess: daysAgo(2), tenantId: DEFAULT_TENANT },
+  { id: "u4", name: "Lucía Vargas", username: "operador", password: "operador123", email: "lucia@lavanet.pe", role: "Operador", active: true, lastAccess: daysAgo(5), tenantId: DEFAULT_TENANT },
 ];
 
 export const SEED_CUSTOMERS = [
@@ -119,6 +123,7 @@ const genOrders = () => {
       number: `ORD-${n++}`,
       customerId: customer.id,
       customerName: customer.name,
+      tenantId: DEFAULT_TENANT,
       items,
       subtotal, discount, tax, total,
       status,
@@ -165,17 +170,20 @@ export const SEED_CONFIG = {
 };
 
 export const initialData = () => ({
-  users: SEED_USERS,
-  customers: SEED_CUSTOMERS,
-  services: SEED_SERVICES,
-  products: SEED_PRODUCTS,
-  orders: SEED_ORDERS,
-  cash: SEED_CASH,
-  config: SEED_CONFIG,
+  users: SEED_USERS.map((u) => withTenant(u)),
+  customers: SEED_CUSTOMERS.map((c) => withTenant(c)),
+  services: SEED_SERVICES.map((s) => withTenant(s)),
+  products: SEED_PRODUCTS.map((p) => withTenant(p)),
+  orders: SEED_ORDERS.map((o) => withTenant(o)),
+  cash: withTenant({ ...SEED_CASH }),
+  config: {
+    ...SEED_CONFIG,
+    business: { ...SEED_CONFIG.business, tenantId: DEFAULT_TENANT },
+  },
   notifications: [
-    { id: "n1", title: "Orden ORD-1004 lista para entregar", type: "info", at: daysAgo(0), read: false },
-    { id: "n2", title: "Stock bajo: Suavizante 3L", type: "warning", at: daysAgo(0), read: false },
-    { id: "n3", title: "Nueva venta registrada ORD-1012", type: "success", at: daysAgo(1), read: true },
+    { id: "n1", title: "Orden ORD-1004 lista para entregar", type: "info", at: daysAgo(0), read: false, tenantId: DEFAULT_TENANT },
+    { id: "n2", title: "Stock bajo: Suavizante 3L", type: "warning", at: daysAgo(0), read: false, tenantId: DEFAULT_TENANT },
+    { id: "n3", title: "Nueva venta registrada ORD-1012", type: "success", at: daysAgo(1), read: true, tenantId: DEFAULT_TENANT },
   ],
   inventoryLog: [],
   coupons: [],

@@ -17,31 +17,42 @@ const DEMO_USERS = [
 export default function Login() {
   const { login } = useApp();
   const navigate = useNavigate();
-  const [username, setUsername] = useState("admin");
-  const [password, setPassword] = useState("admin123");
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const showDemos = process.env.REACT_APP_SHOW_DEMOS === "true";
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      const res = login(username, password);
-      setLoading(false);
+    try {
+      const res = await login(username, password);
       if (res.ok) {
         toast.success(`Bienvenido/a de vuelta`);
         navigate("/");
       } else {
         toast.error(res.error);
       }
-    }, 400);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const quickLogin = (u, p) => {
-    setUsername(u); setPassword(p);
-    setTimeout(() => {
-      const res = login(u, p);
-      if (res.ok) { toast.success("Sesión iniciada"); navigate("/"); }
-    }, 100);
+  const quickLogin = async (u, p) => {
+    setUsername(u);
+    setPassword(p);
+    setLoading(true);
+    try {
+      const res = await login(u, p);
+      if (res.ok) {
+        toast.success("Sesión iniciada");
+        navigate("/");
+      } else {
+        toast.error(res.error);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -122,22 +133,25 @@ export default function Login() {
             </Button>
           </form>
 
+          {showDemos && (
           <div className="mt-8 pt-6 border-t border-slate-100">
             <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-3">Acceso rápido demo</div>
             <div className="grid grid-cols-2 gap-2">
               {DEMO_USERS.map(u => (
                 <button
                   key={u.user}
+                  type="button"
                   data-testid={`quick-login-${u.user}`}
                   onClick={() => quickLogin(u.user, u.pass)}
                   className="text-left p-2.5 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-blue-50 transition-colors group"
                 >
                   <div className="text-xs font-semibold text-slate-700 group-hover:text-blue-700">{u.role}</div>
-                  <div className="text-[10px] text-slate-400 mt-0.5 font-mono">{u.user} / {u.pass}</div>
+                  <div className="text-[10px] text-slate-400 mt-0.5 font-mono">{u.user}</div>
                 </button>
               ))}
             </div>
           </div>
+          )}
         </div>
       </div>
     </div>

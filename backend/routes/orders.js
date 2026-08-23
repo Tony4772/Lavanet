@@ -1,14 +1,12 @@
 const express = require("express");
 const router = express.Router();
-const Tenant = require("../models/Tenant");
 const Customer = require("../models/Customer");
 const Service = require("../models/Service");
 const Order = require("../models/Order");
-const { protect, authorize, verifyTenant } = require("../middleware/auth");
+const { protect, verifyTenant } = require("../middleware/auth");
 
-// @route   GET /api/orders
-// @desc    Obtener todas las órdenes de un tenant
-// @access  Private
+const scoped = (req) => ({ _id: req.params.id, tenant: req.tenantId });
+
 router.get("/", protect, verifyTenant, async (req, res) => {
   try {
     const orders = await Order.find({ tenant: req.tenantId })
@@ -20,27 +18,16 @@ router.get("/", protect, verifyTenant, async (req, res) => {
   }
 });
 
-// @route   GET /api/orders/:id
-// @desc    Obtener una orden específica
-// @access  Private
 router.get("/:id", protect, verifyTenant, async (req, res) => {
   try {
-    const order = await Order.findById(req.params.id).populate(
-      "customer",
-      "name phone"
-    );
-    if (!order) {
-      return res.status(404).json({ message: "Orden no encontrada" });
-    }
+    const order = await Order.findOne(scoped(req)).populate("customer", "name phone");
+    if (!order) return res.status(404).json({ message: "Orden no encontrada" });
     res.json(order);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// @route   POST /api/orders
-// @desc    Crear una nueva orden
-// @access  Private
 router.post("/", protect, verifyTenant, async (req, res) => {
   try {
     const {
@@ -52,86 +39,72 @@ router.post("/", protect, verifyTenant, async (req, res) => {
       total,
       paymentMethod,
       notes,
+      promisedAt,
     } = req.body;
 
-    // Validar cliente
-    const customer = await Customer.findById(customerId);
-    if (!customer) {
-      return res.status(404).json({ message: "Cliente no encontrado" });
+    if (!customerId || !Array.isArray(items) || !items.length) {
+      return res.status(400).json({ message: "customerId e items son requeridos" });
     }
 
-    // Validar que todos los servicios pertenencen al mismo tenant
+    const customer = await Customer.findOne({ _id: customerId, tenant: req.tenantId });
+    if (!customer) {
+      return res.status(404).json({ message: "Cliente no encontrado en este tenant" });
+    }
+
+    const serviceIds = items.map((i) => i.service).filter(Boolean);
     const services = await Service.find({
-      _id: { $in: items.map((i) => i.service) },
+      _id: { $in: serviceIds },
       tenant: req.tenantId,
     });
-
-    if (services.length !== items.length) {
+    if (services.length !== serviceIds.length) {
       return res.status(400).json({
         message: "Uno o más servicios no pertenecen a este tenant",
       });
     }
 
-    const order = new Order({
+    const order = await Order.create({
       orderNumber: `ORD-${Date.now()}`,
       customer: customerId,
       tenant: req.tenantId,
       items,
-      subtotal,
-      discount,
-      tax,
-      total,
-      paymentMethod,
-      notes,
+      subtotal: subtotal || 0,
+      discount: discount || 0,
+      tax: tax || 0,
+      total: total || 0,
+      paymentMethod: paymentMethod || "Efectivo",
+      notes: notes || "",
+      promisedAt,
     });
 
-    const savedOrder = await order.save();
-
-    // Populate customer info
-    await savedOrder.populate("customer", "name phone");
-
-    res.status(201).json(savedOrder);
+    await order.populate("customer", "name phone");
+    res.status(201).json(order);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// @route   PUT /api/orders/:id/status
-// @desc    Actualizar estado de orden
-// @access  Private
 router.put("/:id/status", protect, verifyTenant, async (req, res) => {
   try {
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      { status: req.body.status },
+    const order = await Order.findOneAndUpdate(
+      scoped(req),
+      { status: req.body.status, updatedAt: new Date() },
       { new: true, runValidators: true }
     );
-
-    if (!order) {
-      return res.status(404).json({ message: "Orden no encontrada" });
-    }
-
+    if (!order) return res.status(404).json({ message: "Orden no encontrada" });
     res.json(order);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// @route   PUT /api/orders/:id/paid
-// @desc    Marcar orden como pagada
-// @access  Private
 router.put("/:id/paid", protect, verifyTenant, async (req, res) => {
   try {
-    const order = await Order.findByIdAndUpdate(
-      req.params.id,
-      { paid: req.body.paid },
+    const order = await Order.findOneAndUpdate(
+      scoped(req),
+      { paid: !!req.body.paid, updatedAt: new Date() },
       { new: true, runValidators: true }
     );
-
-    if (!order) {
-      return res.status(404).json({ message: "Orden no encontrada" });
-    }
-
+    if (!order) return res.status(404).json({ message: "Orden no encontrada" });
     res.json(order);
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -1,17 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const Tenant = require("../models/Tenant");
-const config = require("../config/config");
+const { protect, authorize, verifyTenant } = require("../middleware/auth");
 
-// @route   GET /api/config
-// @desc    Obtener configuración del tenant
-// @access  Private
-router.get("/", protect, verifyTenant, (req, res) => {
+router.get("/", protect, verifyTenant, async (req, res) => {
   try {
     const tenant = await Tenant.findById(req.tenantId);
-    if (!tenant) {
-      return res.status(404).json({ message: "Tenant no encontrado" });
-    }
+    if (!tenant) return res.status(404).json({ message: "Tenant no encontrado" });
     res.json({
       currency: tenant.settings?.currency || "PEN",
       timezone: tenant.settings?.timezone || "America/Lima",
@@ -23,9 +18,6 @@ router.get("/", protect, verifyTenant, (req, res) => {
   }
 });
 
-// @route   PUT /api/config
-// @desc    Actualizar configuración del tenant
-// @access  Private/Admin
 router.put("/", protect, authorize("admin"), verifyTenant, async (req, res) => {
   try {
     const tenant = await Tenant.findByIdAndUpdate(
@@ -33,6 +25,7 @@ router.put("/", protect, authorize("admin"), verifyTenant, async (req, res) => {
       { $set: { settings: req.body } },
       { new: true, runValidators: true }
     );
+    if (!tenant) return res.status(404).json({ message: "Tenant no encontrado" });
     res.json(tenant);
   } catch (err) {
     res.status(500).json({ message: err.message });

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 import { Plus, Edit2, Trash2, ShieldCheck } from "lucide-react";
 import { useApp, fmtDate } from "../context/AppContext";
+import { useTenant } from "../context/TenantContext";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
@@ -13,16 +14,17 @@ const ROLES = ["Administrador", "Cajero", "Recepción", "Operador"];
 
 export default function Usuarios() {
   const { data, updateCollection, currentUser } = useApp();
+  const { tenantId } = useTenant();
   const [editing, setEditing] = useState(null);
 
   const save = () => {
     if (!editing.name.trim() || !editing.username.trim()) { toast.error("Nombre y usuario son requeridos"); return; }
     if (editing.id) {
-      updateCollection("users", prev => prev.map(u => u.id === editing.id ? editing : u));
+      updateCollection("users", prev => prev.map(u => u.id === editing.id ? { ...editing, tenantId: editing.tenantId || tenantId } : u));
       toast.success("Usuario actualizado");
     } else {
-      if (!editing.password || editing.password.length < 4) { toast.error("Contraseña debe tener al menos 4 caracteres"); return; }
-      updateCollection("users", prev => [{ ...editing, id: `u${Date.now()}`, active: true, lastAccess: null }, ...prev]);
+      if (!editing.password || editing.password.length < 8) { toast.error("Contraseña debe tener al menos 8 caracteres"); return; }
+      updateCollection("users", prev => [{ ...editing, id: `u${Date.now()}`, active: true, lastAccess: null, tenantId }, ...prev]);
       toast.success("Usuario creado");
     }
     setEditing(null);
@@ -91,7 +93,7 @@ export default function Usuarios() {
               <div><Label>Nombre *</Label><Input data-testid="edit-usuario-name" value={editing.name} onChange={(e) => setEditing(v => ({ ...v, name: e.target.value }))} /></div>
               <div className="grid grid-cols-2 gap-2">
                 <div><Label>Usuario *</Label><Input data-testid="edit-usuario-username" value={editing.username} onChange={(e) => setEditing(v => ({ ...v, username: e.target.value }))} /></div>
-                <div><Label>{editing.id ? "Nueva contraseña" : "Contraseña *"}</Label><Input data-testid="edit-usuario-password" type="text" value={editing.password || ""} onChange={(e) => setEditing(v => ({ ...v, password: e.target.value }))} placeholder={editing.id ? "Dejar vacío para no cambiar" : ""} /></div>
+                <div><Label>{editing.id ? "Nueva contraseña" : "Contraseña *"}</Label><Input data-testid="edit-usuario-password" type="password" value={editing.password || ""} onChange={(e) => setEditing(v => ({ ...v, password: e.target.value }))} placeholder={editing.id ? "Dejar vacío para no cambiar" : ""} /></div>
               </div>
               <div><Label>Email</Label><Input value={editing.email || ""} onChange={(e) => setEditing(v => ({ ...v, email: e.target.value }))} /></div>
               <div><Label>Rol</Label>

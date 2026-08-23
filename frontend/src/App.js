@@ -1,7 +1,7 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Toaster } from "sonner";
-import { useApp } from "./context/AppContext";
+import { useApp, canAccess } from "./context/AppContext";
 import AppLayout from "./components/AppLayout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -18,30 +18,68 @@ import Usuarios from "./pages/Usuarios";
 import Configuracion from "./pages/Configuracion";
 import ModoTurno from "./pages/ModoTurno";
 
-const Protected = ({ children }) => {
+const RequireAuth = () => {
   const { currentUser } = useApp();
   if (!currentUser) return <Navigate to="/login" replace />;
-  return children;
+  return <Outlet />;
+};
+
+const RequireRole = ({ path }) => {
+  const { currentUser } = useApp();
+  if (!canAccess(currentUser?.role, path)) return <Navigate to="/" replace />;
+  return <Outlet />;
 };
 
 function AppRoutes() {
+  const { currentUser } = useApp();
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route element={<Protected><AppLayout /></Protected>}>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/pos" element={<POS />} />
-        <Route path="/ordenes" element={<Ordenes />} />
-        <Route path="/clientes" element={<Clientes />} />
-        <Route path="/servicios" element={<Servicios />} />
-        <Route path="/productos" element={<Productos />} />
-        <Route path="/inventario" element={<Inventario />} />
-        <Route path="/entregas" element={<Entregas />} />
-        <Route path="/turno" element={<ModoTurno />} />
-        <Route path="/caja" element={<Caja />} />
-        <Route path="/reportes" element={<Reportes />} />
-        <Route path="/usuarios" element={<Usuarios />} />
-        <Route path="/configuracion" element={<Configuracion />} />
+      <Route
+        path="/login"
+        element={currentUser ? <Navigate to="/" replace /> : <Login />}
+      />
+      <Route element={<RequireAuth />}>
+        <Route element={<AppLayout />}>
+          <Route element={<RequireRole path="/" />}>
+            <Route path="/" element={<Dashboard />} />
+          </Route>
+          <Route element={<RequireRole path="/pos" />}>
+            <Route path="/pos" element={<POS />} />
+          </Route>
+          <Route element={<RequireRole path="/ordenes" />}>
+            <Route path="/ordenes" element={<Ordenes />} />
+          </Route>
+          <Route element={<RequireRole path="/clientes" />}>
+            <Route path="/clientes" element={<Clientes />} />
+          </Route>
+          <Route element={<RequireRole path="/servicios" />}>
+            <Route path="/servicios" element={<Servicios />} />
+          </Route>
+          <Route element={<RequireRole path="/productos" />}>
+            <Route path="/productos" element={<Productos />} />
+          </Route>
+          <Route element={<RequireRole path="/inventario" />}>
+            <Route path="/inventario" element={<Inventario />} />
+          </Route>
+          <Route element={<RequireRole path="/entregas" />}>
+            <Route path="/entregas" element={<Entregas />} />
+          </Route>
+          <Route element={<RequireRole path="/turno" />}>
+            <Route path="/turno" element={<ModoTurno />} />
+          </Route>
+          <Route element={<RequireRole path="/caja" />}>
+            <Route path="/caja" element={<Caja />} />
+          </Route>
+          <Route element={<RequireRole path="/reportes" />}>
+            <Route path="/reportes" element={<Reportes />} />
+          </Route>
+          <Route element={<RequireRole path="/usuarios" />}>
+            <Route path="/usuarios" element={<Usuarios />} />
+          </Route>
+          <Route element={<RequireRole path="/configuracion" />}>
+            <Route path="/configuracion" element={<Configuracion />} />
+          </Route>
+        </Route>
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -52,7 +90,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <AppRoutes />
-      <Toaster position="bottom-right" richColors closeButton toastOptions={{ className: "!z-[100]" }} className="!z-[100]" />
+      <Toaster
+        position="bottom-right"
+        richColors
+        closeButton
+        toastOptions={{ className: "!z-[100]" }}
+        className="!z-[100]"
+      />
     </BrowserRouter>
   );
 }

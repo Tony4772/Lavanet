@@ -1,84 +1,67 @@
 const express = require("express");
 const router = express.Router();
-const Tenant = require("../models/Tenant");
 const Customer = require("../models/Customer");
 const { protect, authorize, verifyTenant } = require("../middleware/auth");
 
-// @route   GET /api/customers
-// @desc    Obtener todos los clientes de un tenant
-// @access  Private
+const scoped = (req) => ({ _id: req.params.id, tenant: req.tenantId });
+
 router.get("/", protect, verifyTenant, async (req, res) => {
   try {
-    const customers = await Customer.find({ tenant: req.tenantId });
+    const customers = await Customer.find({ tenant: req.tenantId }).sort({ createdAt: -1 });
     res.json(customers);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// @route   GET /api/customers/:id
-// @desc    Obtener un cliente específico
-// @access  Private
 router.get("/:id", protect, verifyTenant, async (req, res) => {
   try {
-    const customer = await Customer.findById(req.params.id);
-    if (!customer) {
-      return res.status(404).json({ message: "Cliente no encontrado" });
-    }
+    const customer = await Customer.findOne(scoped(req));
+    if (!customer) return res.status(404).json({ message: "Cliente no encontrado" });
     res.json(customer);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// @route   POST /api/customers
-// @desc    Crear un nuevo cliente
-// @access  Private
 router.post("/", protect, verifyTenant, async (req, res) => {
   try {
     const { name, phone, email, address } = req.body;
-    const customer = new Customer({
+    if (!name || !phone) {
+      return res.status(400).json({ message: "name y phone son requeridos" });
+    }
+    const customer = await Customer.create({
       name,
       phone,
       email,
       address,
       tenant: req.tenantId,
     });
-    await customer.save();
     res.status(201).json(customer);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// @route   PUT /api/customers/:id
-// @desc    Actualizar un cliente
-// @access  Private
 router.put("/:id", protect, verifyTenant, async (req, res) => {
   try {
-    const customer = await Customer.findByIdAndUpdate(
-      req.params.id,
-      { ...req.body, tenant: req.tenantId },
+    const { name, phone, email, address, active } = req.body;
+    const customer = await Customer.findOneAndUpdate(
+      scoped(req),
+      { name, phone, email, address, active, updatedAt: new Date() },
       { new: true, runValidators: true }
     );
-    if (!customer) {
-      return res.status(404).json({ message: "Cliente no encontrado" });
-    }
+    if (!customer) return res.status(404).json({ message: "Cliente no encontrado" });
     res.json(customer);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// @route   DELETE /api/customers/:id
-// @desc    Eliminar un cliente
-// @access  Private/Admin
 router.delete("/:id", protect, authorize("admin"), verifyTenant, async (req, res) => {
   try {
-    const customer = await Customer.findByIdAndDelete(req.params.id);
-    if (!customer) {
-      return res.status(404).json({ message: "Cliente no encontrado" });
-    }
+    const customer = await Customer.findOneAndDelete(scoped(req));
+    if (!customer) return res.status(404).json({ message: "Cliente no encontrado" });
     res.json({ message: "Cliente eliminado" });
   } catch (err) {
     res.status(500).json({ message: err.message });

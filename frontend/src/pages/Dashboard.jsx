@@ -9,7 +9,6 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, Legend, CartesianGrid,
 } from "recharts";
 import { useApp, fmtMoney, fmtDate } from "../context/AppContext";
-import { useTenant } from "../context/TenantContext";
 import { StatusBadge } from "../components/StatusBadge";
 import { Button } from "../components/ui/button";
 
@@ -47,45 +46,31 @@ const CHART_COLORS = ["#1A56DB", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#0
 
 export default function Dashboard() {
   const { data, currentUser } = useApp();
-  const { tenantId } = useTenant();
   const navigate = useNavigate();
 
   const stats = useMemo(() => {
     const today = new Date().toDateString();
     const thisMonth = new Date().getMonth();
 
-    const salesToday = tenantId 
-      ? data.orders.filter(o => new Date(o.createdAt).toDateString() === today && o.tenantId === tenantId).reduce((s, o) => s + o.total, 0)
-      : data.orders.filter(o => new Date(o.createdAt).toDateString() === today).reduce((s, o) => s + o.total, 0);
-    const salesMonth = tenantId
-      ? data.orders.filter(o => new Date(o.createdAt).getMonth() === thisMonth && o.tenantId === tenantId).reduce((s, o) => s + o.total, 0)
-      : data.orders.filter(o => new Date(o.createdAt).getMonth() === thisMonth).reduce((s, o) => s + o.total, 0);
-    const pending = tenantId
-      ? data.orders.filter(o => !["Entregada", "Cancelada"].includes(o.status) && o.tenantId === tenantId).length
-      : data.orders.filter(o => !["Entregada", "Cancelada"].includes(o.status)).length;
-    const ready = tenantId
-      ? data.orders.filter(o => o.status === "Lista para entregar" && o.tenantId === tenantId).length
-      : data.orders.filter(o => o.status === "Lista para entregar").length;
+    const salesToday = data.orders.filter(o => new Date(o.createdAt).toDateString() === today).reduce((s, o) => s + o.total, 0);
+    const salesMonth = data.orders.filter(o => new Date(o.createdAt).getMonth() === thisMonth).reduce((s, o) => s + o.total, 0);
+    const pending = data.orders.filter(o => !["Entregada", "Cancelada"].includes(o.status)).length;
+    const ready = data.orders.filter(o => o.status === "Lista para entregar").length;
     const avgTicket = data.orders.length ? data.orders.reduce((s, o) => s + o.total, 0) / data.orders.length : 0;
 
-    // Sales by day (last 7 days)
     const salesByDay = Array.from({ length: 7 }, (_, i) => {
       const d = new Date();
       d.setDate(d.getDate() - (6 - i));
       const key = d.toDateString();
-      const total = tenantId
-        ? data.orders.filter(o => new Date(o.createdAt).toDateString() === key && o.tenantId === tenantId).reduce((s, o) => s + o.total, 0)
-        : data.orders.filter(o => new Date(o.createdAt).toDateString() === key).reduce((s, o) => s + o.total, 0);
+      const total = data.orders.filter(o => new Date(o.createdAt).toDateString() === key).reduce((s, o) => s + o.total, 0);
       return { day: d.toLocaleDateString("es-PE", { weekday: "short" }), total: Math.round(total) };
     });
     const weekIncome = salesByDay.reduce((s, x) => s + x.total, 0);
 
-    // Orders by status
     const statusCount = {};
     data.orders.forEach(o => { statusCount[o.status] = (statusCount[o.status] || 0) + 1; });
     const ordersByStatus = Object.entries(statusCount).map(([status, count]) => ({ status, count }));
 
-    // Top services
     const svcTally = {};
     data.orders.forEach(o => o.items.forEach(it => {
       svcTally[it.name] = (svcTally[it.name] || 0) + it.qty;
@@ -93,7 +78,6 @@ export default function Dashboard() {
     const topServices = Object.entries(svcTally).sort((a, b) => b[1] - a[1]).slice(0, 5)
       .map(([name, qty]) => ({ name: name.length > 20 ? name.slice(0, 20) + "…" : name, qty }));
 
-    // Revenue by category
     const catTally = {};
     data.orders.forEach(o => o.items.forEach(it => {
       catTally[it.category] = (catTally[it.category] || 0) + (it.price * it.qty);
@@ -101,7 +85,7 @@ export default function Dashboard() {
     const revByCat = Object.entries(catTally).map(([name, value]) => ({ name, value: Math.round(value) })).sort((a, b) => b.value - a.value).slice(0, 6);
 
     return { salesToday, salesMonth, pending, ready, avgTicket, salesByDay, weekIncome, ordersByStatus, topServices, revByCat };
-  }, [data.orders, tenantId]);
+  }, [data.orders]);
 
   const recentOrders = [...data.orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6);
   const currency = data.config.business.currencySymbol;

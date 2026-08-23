@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   Search, Plus, Minus, X, ShoppingCart, User, UserPlus, Trash2,
@@ -99,7 +98,14 @@ export default function POS() {
 
   const handleCreateCustomer = () => {
     if (!newCustomer.name.trim() || !newCustomer.phone.trim()) { toast.error("Nombre y teléfono son requeridos"); return; }
-    const c = { id: `c${Date.now()}`, ...newCustomer, address: "", createdAt: new Date().toISOString(), active: true };
+    const c = {
+      id: `c${Date.now()}`,
+      ...newCustomer,
+      address: "",
+      createdAt: new Date().toISOString(),
+      active: true,
+      tenantId,
+    };
     updateCollection("customers", (prev) => [c, ...prev]);
     setCustomer(c);
     setShowNewCustomer(false);

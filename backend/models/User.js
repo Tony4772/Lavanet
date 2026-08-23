@@ -1,50 +1,61 @@
 const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const bcrypt = require("bcryptjs");
 
-const UserSchema = new Schema({
-  name: {
-    type: String,
-    required: [true, "Nombre es requerido"],
-    trim: true,
+const UserSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, "Nombre es requerido"],
+      trim: true,
+    },
+    username: {
+      type: String,
+      required: [true, "Username es requerido"],
+      trim: true,
+      lowercase: true,
+    },
+    email: {
+      type: String,
+      required: [true, "Email es requerido"],
+      lowercase: true,
+      trim: true,
+    },
+    password: {
+      type: String,
+      required: [true, "Password es requerido"],
+      minlength: [8, "Password debe tener mínimo 8 caracteres"],
+      select: false,
+    },
+    role: {
+      type: String,
+      enum: ["admin", "cajero", "recepcion", "operador"],
+      default: "operador",
+    },
+    tenant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Tenant",
+      required: true,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    lastLogin: Date,
   },
-  email: {
-    type: String,
-    required: [true, "Email es requerido"],
-    unique: true,
-    lowercase: true,
-    trim: true,
-  },
-  password: {
-    type: String,
-    required: [true, "Password es requerido"],
-    minlength: [8, "Password debe tener mínimo 8 caracteres"],
-  },
-  role: {
-    type: String,
-    enum: ["admin", "cajero", "recepcion", "operador"],
-    default: "operador",
-  },
-  tenant: {
-    type: Schema.Types.ObjectId,
-    ref: "Tenant",
-    required: true,
-  },
-  isActive: {
-    type: Boolean,
-    default: true,
-  },
-  lastLogin: Date,
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
+  { timestamps: true }
+);
+
+UserSchema.index({ tenant: 1, email: 1 }, { unique: true });
+UserSchema.index({ tenant: 1, username: 1 }, { unique: true });
+
+UserSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
+  this.password = await bcrypt.hash(this.password, 12);
+  next();
 });
 
-// Index for tenant lookup
-UserSchema.index({ tenant: 1, email: 1 }, { unique: true });
+UserSchema.methods.comparePassword = function (candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
 
 module.exports = mongoose.model("User", UserSchema);
