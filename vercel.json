@@ -1,9 +1,9 @@
 {
-  "buildCommand": "cd frontend && yarn install --frozen-lockfile && yarn build",
+  "installCommand": "yarn --cwd frontend install",
+  "buildCommand": "yarn --cwd frontend build",
   "outputDirectory": "frontend/build",
-  "installCommand": "echo skip-root-install",
-  "framework": null,
+  "framework": "create-react-app",
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
