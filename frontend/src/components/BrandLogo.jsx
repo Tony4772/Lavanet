@@ -26,7 +26,7 @@ const SIZE_CLASS = {
   /** Login / landing escritorio — asset 120×80 */
   heroWide: "h-[90px] w-auto max-w-full mx-auto",
   /** Login / landing móvil — asset 100×70 */
-  heroWideMobile: "h-[80px] w-auto max-w-full mx-auto",
+  heroWideMobile: "h-[120px] w-auto max-w-full mx-auto",
 };
 
 const SIZE_SRC = {
