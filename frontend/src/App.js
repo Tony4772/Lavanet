@@ -4,7 +4,7 @@ import { Toaster } from "sonner";
 import { useApp, canAccess } from "./context/AppContext";
 import AppLayout from "./components/AppLayout";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
+import SuperAdmin from "./pages/SuperAdmin";
 import Dashboard from "./pages/Dashboard";
 import POS from "./pages/POS";
 import Ordenes from "./pages/Ordenes";
@@ -25,10 +25,26 @@ const RequireAuth = () => {
   return <Outlet />;
 };
 
+const RequireSuperadmin = () => {
+  const { currentUser } = useApp();
+  if (currentUser?.rawRole !== "superadmin" && currentUser?.role !== "Superadmin") {
+    return <Navigate to="/" replace />;
+  }
+  return <Outlet />;
+};
+
 const RequireRole = ({ path }) => {
   const { currentUser } = useApp();
   if (!canAccess(currentUser?.role, path)) return <Navigate to="/" replace />;
   return <Outlet />;
+};
+
+const HomeRedirect = () => {
+  const { currentUser } = useApp();
+  if (currentUser?.rawRole === "superadmin" || currentUser?.role === "Superadmin") {
+    return <Navigate to="/superadmin" replace />;
+  }
+  return <Navigate to="/" replace />;
 };
 
 function AppRoutes() {
@@ -37,13 +53,13 @@ function AppRoutes() {
     <Routes>
       <Route
         path="/login"
-        element={currentUser ? <Navigate to="/" replace /> : <Login />}
+        element={currentUser ? <HomeRedirect /> : <Login />}
       />
-      <Route
-        path="/register"
-        element={currentUser ? <Navigate to="/" replace /> : <Register />}
-      />
+      <Route path="/register" element={<Navigate to="/login" replace />} />
       <Route element={<RequireAuth />}>
+        <Route element={<RequireSuperadmin />}>
+          <Route path="/superadmin" element={<SuperAdmin />} />
+        </Route>
         <Route element={<AppLayout />}>
           <Route element={<RequireRole path="/" />}>
             <Route path="/" element={<Dashboard />} />

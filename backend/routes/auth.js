@@ -3,7 +3,8 @@ const rateLimit = require("express-rate-limit");
 const router = express.Router();
 const Tenant = require("../models/Tenant");
 const User = require("../models/User");
-const { protect, authorize, createSendToken } = require("../middleware/auth");
+const { protect, createSendToken } = require("../middleware/auth");
+const billing = require("../lib/billing");
 
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -13,8 +14,15 @@ const loginLimiter = rateLimit({
   message: { status: "fail", message: "Demasiados intentos de login" },
 });
 
-// POST /api/auth/register — creates tenant + admin user
+const publicRegisterEnabled = () => process.env.ALLOW_PUBLIC_REGISTER === "true";
+
 router.post("/register", async (req, res) => {
+  if (!publicRegisterEnabled()) {
+    return res.status(403).json({
+      status: "fail",
+      message: "Registro público desactivado. Contrata por WhatsApp 906 591 037",
+    });
+  }
   try {
     const { tenantName, name, username, email, password } = req.body;
     if (!tenantName || !name || !username || !email || !password) {
@@ -35,7 +43,15 @@ router.post("/register", async (req, res) => {
       return res.status(409).json({ status: "fail", message: "Tenant ya existe" });
     }
 
-    const tenant = await Tenant.create({ name: tenantName.trim() });
+    const startedAt = new Date();
+    const tenant = await Tenant.create({
+      name: tenantName.trim(),
+      slug: `biz-${Date.now().toString(36)}`,
+      startedAt,
+      firstChargeAt: billing.computeFirstChargeAt(startedAt),
+      billingStatus: "trial",
+      monthlyPrice: 0,
+    });
     const user = await User.create({
       name,
       username: username.trim().toLowerCase(),
@@ -57,7 +73,6 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// POST /api/auth/login
 router.post("/login", loginLimiter, async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -87,39 +102,100 @@ router.post("/login", loginLimiter, async (req, res) => {
       });
     }
 
+    let tenantInfo = null;
+    if (user.role !== "superadmin" && user.tenant) {
+      const tenant = await Tenant.findById(user.tenant);
+      if (tenant) {
+        if (!tenant.isDemo && tenant.billingStatus === "suspended") {
+          return res.status(402).json({
+            status: "fail",
+            code: "SUBSCRIPTION_SUSPENDED",
+            message: "Suscripción suspendida. WhatsApp 906 591 037",
+          });
+        }
+        tenantInfo = {
+          id: tenant._id,
+          name: tenant.name,
+          isDemo: tenant.isDemo,
+          billing: billing.getBillingSnapshot(tenant),
+        };
+      }
+    }
+
     user.lastLogin = new Date();
     await user.save({ validateBeforeSave: false });
 
+    const token = require("../middleware/auth").signToken(user);
+    const days = Number(process.env.JWT_COOKIE_EXPIRES_IN || 1);
+    res.cookie("jwt", token, {
+      expires: new Date(Date.now() + days * 24 * 60 * 60 * 1000),
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+    });
+
+    const safeUser = user.toObject();
+    delete safeUser.password;
+
+    res.status(200).json({
+      status: "success",
+      token,
+      data: { user: safeUser, tenant: tenantInfo },
+    });
+  } catch (err) {
+    res.status(500).json({ status: "error", message: err.message });
+  }
+});
+
+router.post("/demo", loginLimiter, async (req, res) => {
+  try {
+    const demoUser = process.env.DEMO_USERNAME || "demo";
+    const demoPass = process.env.DEMO_PASSWORD || "demo2026";
+    const tenant = await Tenant.findOne({ slug: "demo", isDemo: true });
+    const user = await User.findOne({ username: demoUser, tenant: tenant?._id }).select("+password");
+    if (!user || !(await user.comparePassword(demoPass))) {
+      return res.status(503).json({ status: "fail", message: "Demo no disponible" });
+    }
     createSendToken(user, 200, res);
   } catch (err) {
     res.status(500).json({ status: "error", message: err.message });
   }
 });
 
-// GET /api/auth/me
 router.get("/me", protect, async (req, res) => {
   const user = await User.findById(req.user._id);
-  res.json({ status: "success", data: { user } });
+  let tenant = null;
+  if (user.tenant && user.role !== "superadmin") {
+    const t = await Tenant.findById(user.tenant);
+    if (t) {
+      tenant = {
+        ...t.toObject(),
+        billing: billing.getBillingSnapshot(t),
+      };
+    }
+  }
+  res.json({ status: "success", data: { user, tenant } });
 });
 
-// GET /api/auth/tenant
 router.get("/tenant", protect, async (req, res) => {
   try {
     const tenant = await Tenant.findById(req.user.tenant);
     if (!tenant) {
       return res.status(404).json({ status: "fail", message: "Tenant no encontrado" });
     }
-    res.json({ status: "success", data: { tenant } });
+    res.json({
+      status: "success",
+      data: { tenant, billing: billing.getBillingSnapshot(tenant) },
+    });
   } catch (err) {
     res.status(500).json({ status: "error", message: err.message });
   }
 });
 
-// POST /api/auth/register-tenant (admin only, additional tenants not supported in single-tenant-user model)
-router.post("/register-tenant", protect, authorize("admin"), async (req, res) => {
+router.post("/register-tenant", protect, async (req, res) => {
   return res.status(400).json({
     status: "fail",
-    message: "Usa POST /api/auth/register para crear un nuevo negocio",
+    message: "Contacta WhatsApp 906 591 037 para contratar lavanet",
   });
 });
 

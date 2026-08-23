@@ -1,27 +1,23 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { User, Lock, ArrowRight } from "lucide-react";
+import { User, Lock, ArrowRight, Play, MessageCircle } from "lucide-react";
 import { useApp } from "../context/AppContext";
+import { api, hasApiBackend } from "../lib/api";
 import BrandLogo from "../components/BrandLogo";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
 
-const DEMO_USERS = [
-  { role: "Administrador", user: "admin", pass: "admin123" },
-  { role: "Cajero", user: "cajero", pass: "cajero123" },
-  { role: "Recepción", user: "recepcion", pass: "recepcion123" },
-  { role: "Operador", user: "operador", pass: "operador123" },
-];
+const WHATSAPP = "51906591037";
+const WHATSAPP_MSG = encodeURIComponent("Hola, quiero contratar lavanet para mi lavandería.");
 
 export default function Login() {
-  const { login } = useApp();
+  const { login, applySession } = useApp();
   const navigate = useNavigate();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const showDemos = process.env.REACT_APP_SHOW_DEMOS === "true";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -30,7 +26,7 @@ export default function Login() {
       const res = await login(username, password);
       if (res.ok) {
         toast.success("Bienvenido/a de vuelta");
-        navigate("/");
+        navigate(res.superadmin ? "/superadmin" : "/");
       } else {
         toast.error(res.error);
       }
@@ -39,18 +35,19 @@ export default function Login() {
     }
   };
 
-  const quickLogin = async (u, p) => {
-    setUsername(u);
-    setPassword(p);
+  const enterDemo = async () => {
+    if (!hasApiBackend()) {
+      toast.error("Demo disponible solo con API en producción");
+      return;
+    }
     setLoading(true);
     try {
-      const res = await login(u, p);
-      if (res.ok) {
-        toast.success("Sesión iniciada");
-        navigate("/");
-      } else {
-        toast.error(res.error);
-      }
+      const { data: res } = await api.post("/api/auth/demo");
+      applySession(res);
+      toast.success("Modo demo — datos de ejemplo");
+      navigate("/");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Demo no disponible");
     } finally {
       setLoading(false);
     }
@@ -82,11 +79,16 @@ export default function Login() {
           <h2 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">
             Iniciar sesión
           </h2>
-          <p className="text-slate-500 mt-2">
-            ¿Nuevo en lavanet?{" "}
-            <Link to="/register" className="text-brand font-semibold hover:underline">
-              Crear cuenta
-            </Link>
+          <p className="text-slate-500 mt-2 text-sm leading-relaxed">
+            ¿Quieres contratar lavanet?{" "}
+            <a
+              href={`https://wa.me/${WHATSAPP}?text=${WHATSAPP_MSG}`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-brand font-semibold hover:underline inline-flex items-center gap-1"
+            >
+              <MessageCircle className="w-3.5 h-3.5" /> WhatsApp 906 591 037
+            </a>
           </p>
 
           <form onSubmit={handleSubmit} className="mt-8 space-y-5">
@@ -131,29 +133,20 @@ export default function Login() {
             </Button>
           </form>
 
-          {showDemos && (
-            <div className="mt-8 pt-6 border-t border-slate-100">
-              <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-3">
-                Acceso rápido demo
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {DEMO_USERS.map((u) => (
-                  <button
-                    key={u.user}
-                    type="button"
-                    data-testid={`quick-login-${u.user}`}
-                    onClick={() => quickLogin(u.user, u.pass)}
-                    className="text-left p-2.5 rounded-lg border border-slate-200 hover:border-brand hover:bg-brand-soft transition-colors group"
-                  >
-                    <div className="text-xs font-semibold text-slate-700 group-hover:text-brand-dark">
-                      {u.role}
-                    </div>
-                    <div className="text-[10px] text-slate-400 mt-0.5 font-mono">{u.user}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+          <div className="mt-6 space-y-3">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={loading}
+              onClick={enterDemo}
+              className="w-full h-11 gap-2 border-brand text-brand hover:bg-brand-soft"
+            >
+              <Play className="w-4 h-4" /> Probar demo
+            </Button>
+            <p className="text-[11px] text-center text-slate-400">
+              Cuenta demo compartida con datos de ejemplo. Para tu negocio, contrata por WhatsApp.
+            </p>
+          </div>
         </div>
       </div>
     </div>

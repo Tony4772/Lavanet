@@ -8,9 +8,12 @@ const mongoose = require("mongoose");
 const path = require("path");
 require("dotenv").config();
 
+const mountTenantRoutes = require("./middleware/tenantRoutes");
+const { ensurePlatformSeed, resetDemoTenant } = require("./lib/seedPlatform");
+const billing = require("./lib/billing");
+
 const app = express();
 
-// Detrás de Caddy / reverse proxy
 app.set("trust proxy", 1);
 
 const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:3000")
@@ -35,19 +38,21 @@ app.use(
 );
 app.use(compression());
 app.use(cookieParser());
-app.use(express.json({ limit: "10kb" }));
+app.use(express.json({ limit: "256kb" }));
 
 app.get("/api/health", (req, res) => res.json({ status: "ok" }));
 
 app.use("/api/auth", require("./routes/auth"));
-app.use("/api/users", require("./routes/users"));
-app.use("/api/customers", require("./routes/customers"));
-app.use("/api/services", require("./routes/services"));
-app.use("/api/orders", require("./routes/orders"));
-app.use("/api/products", require("./routes/products"));
-app.use("/api/config", require("./routes/config"));
-app.use("/api/cash", require("./routes/cash"));
-app.use("/api/coupons", require("./routes/coupons"));
+app.use("/api/superadmin", require("./routes/superadmin"));
+
+mountTenantRoutes(app, "/api/users", require("./routes/users"));
+mountTenantRoutes(app, "/api/customers", require("./routes/customers"));
+mountTenantRoutes(app, "/api/services", require("./routes/services"));
+mountTenantRoutes(app, "/api/orders", require("./routes/orders"));
+mountTenantRoutes(app, "/api/products", require("./routes/products"));
+mountTenantRoutes(app, "/api/config", require("./routes/config"));
+mountTenantRoutes(app, "/api/cash", require("./routes/cash"));
+mountTenantRoutes(app, "/api/coupons", require("./routes/coupons"));
 
 if (process.env.NODE_ENV === "production") {
   const buildPath = path.join(__dirname, "..", "frontend", "build");
@@ -58,6 +63,28 @@ if (process.env.NODE_ENV === "production") {
     }
     return res.sendFile(path.resolve(buildPath, "index.html"));
   });
+}
+
+function scheduleJobs() {
+  const run = () => {
+    billing.processDueBilling().catch((err) => console.error("Billing job:", err.message));
+  };
+  run();
+  setInterval(run, 6 * 60 * 60 * 1000);
+
+  const scheduleDemoReset = () => {
+    const now = new Date();
+    const lima = new Date(now.toLocaleString("en-US", { timeZone: "America/Lima" }));
+    const next = new Date(lima);
+    next.setDate(next.getDate() + 1);
+    next.setHours(0, 0, 0, 0);
+    const ms = next - lima;
+    setTimeout(() => {
+      resetDemoTenant().catch(console.error);
+      setInterval(() => resetDemoTenant().catch(console.error), 24 * 60 * 60 * 1000);
+    }, Math.max(ms, 60000));
+  };
+  scheduleDemoReset();
 }
 
 async function start() {
@@ -71,6 +98,9 @@ async function start() {
 
   await mongoose.connect(process.env.MONGO_URL);
   console.log("MongoDB conectado");
+
+  await ensurePlatformSeed();
+  scheduleJobs();
 
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {

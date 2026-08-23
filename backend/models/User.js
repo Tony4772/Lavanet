@@ -28,7 +28,7 @@ const UserSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["admin", "cajero", "recepcion", "operador"],
+      enum: ["superadmin", "admin", "cajero", "recepcion", "operador"],
       default: "operador",
     },
     tenant: {

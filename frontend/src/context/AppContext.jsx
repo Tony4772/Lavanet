@@ -123,27 +123,44 @@ export const AppProvider = ({ children }) => {
     };
   }, []);
 
+  const mapApiUser = (user) =>
+    stripPassword({
+      id: user._id || user.id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      role:
+        user.role === "superadmin"
+          ? "Superadmin"
+          : user.role === "admin"
+            ? "Administrador"
+            : user.role,
+      rawRole: user.role,
+      tenantId: user.tenant ? String(user.tenant) : null,
+      active: user.isActive !== false,
+      isJWT: true,
+      isDemo: Boolean(user.isDemo),
+    });
+
+  const applySession = useCallback(
+    (res) => {
+      const user = res?.data?.user;
+      if (res?.token) setAuthToken(res.token);
+      if (user?.tenant) setTenant(String(user.tenant));
+      const mapped = mapApiUser(user);
+      setCurrentUser(mapped);
+      return mapped;
+    },
+    [setTenant]
+  );
+
   const login = useCallback(
     async (username, password) => {
       if (hasApiBackend()) {
         try {
           const { data: res } = await api.post("/api/auth/login", { username, password });
-          const user = res?.data?.user;
-          if (res?.token) setAuthToken(res.token);
-          if (user?.tenant) setTenant(String(user.tenant));
-          setCurrentUser(
-            stripPassword({
-              id: user._id || user.id,
-              name: user.name,
-              username: user.username,
-              email: user.email,
-              role: user.role === "admin" ? "Administrador" : user.role,
-              tenantId: String(user.tenant),
-              active: user.isActive !== false,
-              isJWT: true,
-            })
-          );
-          return { ok: true };
+          const mapped = applySession(res);
+          return { ok: true, superadmin: mapped.rawRole === "superadmin" };
         } catch (err) {
           if (err?.response) {
             return { ok: false, error: err.response.data?.message || "Credenciales inválidas" };
@@ -183,7 +200,7 @@ export const AppProvider = ({ children }) => {
       if (attempts === 1) localStorage.setItem("lavanet_first_fail_time", new Date().toISOString());
       return { ok: false, error: "Usuario o contraseña inválidos" };
     },
-    [store.users, setTenant]
+    [store.users, setTenant, applySession]
   );
 
   const logout = useCallback(() => {
@@ -545,6 +562,7 @@ export const AppProvider = ({ children }) => {
     currentUser,
     login,
     logout,
+    applySession,
     registerAccount,
     resetDemo,
     createOrder,
@@ -652,6 +670,10 @@ export const ROUTE_ROLES = {
 };
 
 export const canAccess = (role, path) => {
+  if (role === "Superadmin" || role === "superadmin") {
+    return path === "/superadmin" || path.startsWith("/superadmin");
+  }
+  if (path.startsWith("/superadmin")) return false;
   const allowed = ROUTE_ROLES[path];
   if (!allowed) return true;
   return allowed.includes(role);

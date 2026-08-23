@@ -154,6 +154,19 @@ export default function AppLayout() {
       )}
 
       <div className="lg:ml-64">
+        {currentUser?.username === "demo" && (
+          <div className="bg-amber-500 text-amber-950 text-center text-xs sm:text-sm py-2 px-4 font-medium">
+            Modo demo — datos de ejemplo. Contrata por WhatsApp{" "}
+            <a
+              href="https://wa.me/51906591037"
+              target="_blank"
+              rel="noreferrer"
+              className="underline font-bold"
+            >
+              906 591 037
+            </a>
+          </div>
+        )}
         <header className="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 h-16 flex items-center px-4 lg:px-8 gap-4">
           <button
             className="lg:hidden"

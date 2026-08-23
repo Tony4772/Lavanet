@@ -1,9 +1,15 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Tenant = require("../models/Tenant");
 
 const signToken = (user) =>
   jwt.sign(
-    { id: user._id, tenant: user.tenant, role: user.role },
+    {
+      id: user._id,
+      tenant: user.tenant,
+      role: user.role,
+      isSuperadmin: user.role === "superadmin",
+    },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
   );
@@ -77,8 +83,8 @@ exports.authorize = (...roles) => (req, res, next) => {
   next();
 };
 
-/** Sets req.tenantId from the authenticated user (never from client body). */
 exports.verifyTenant = (req, res, next) => {
+  if (req.user?.role === "superadmin") return next();
   if (!req.user?.tenant) {
     return res.status(403).json({
       status: "fail",
@@ -87,4 +93,39 @@ exports.verifyTenant = (req, res, next) => {
   }
   req.tenantId = req.user.tenant.toString();
   next();
+};
+
+exports.superadminOnly = (req, res, next) => {
+  if (req.user?.role !== "superadmin") {
+    return res.status(403).json({ status: "fail", message: "Solo superadmin" });
+  }
+  next();
+};
+
+/** Bloquea tenants suspendidos (no demo, no superadmin). */
+exports.requireActiveSubscription = async (req, res, next) => {
+  try {
+    if (req.user?.role === "superadmin") return next();
+    if (!req.user?.tenant) return next();
+
+    const tenant = await Tenant.findById(req.user.tenant);
+    if (!tenant) {
+      return res.status(403).json({ status: "fail", message: "Negocio no encontrado" });
+    }
+    if (tenant.isDemo || tenant.billingStatus === "demo") {
+      req.tenantDoc = tenant;
+      return next();
+    }
+    if (tenant.billingStatus === "suspended" || tenant.status === "suspended") {
+      return res.status(402).json({
+        status: "fail",
+        code: "SUBSCRIPTION_SUSPENDED",
+        message: "Suscripción suspendida. Contacta WhatsApp 906 591 037",
+      });
+    }
+    req.tenantDoc = tenant;
+    next();
+  } catch (err) {
+    return res.status(500).json({ status: "error", message: err.message });
+  }
 };
