@@ -24,9 +24,9 @@ const SIZE_CLASS = {
   /** Login / registro panel izquierdo escritorio (cuadrado, legacy) */
   heroDesktop: "w-[400px] max-w-full h-auto",
   /** Login / landing escritorio — asset 120×80 */
-  heroWide: "h-20 w-auto max-w-full mx-auto",
+  heroWide: "h-[90px] w-auto max-w-full mx-auto",
   /** Login / landing móvil — asset 100×70 */
-  heroWideMobile: "h-[70px] w-auto max-w-full",
+  heroWideMobile: "h-[80px] w-auto max-w-full mx-auto",
 };
 
 const SIZE_SRC = {
