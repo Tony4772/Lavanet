@@ -10,6 +10,9 @@ require("dotenv").config();
 
 const app = express();
 
+// Detrás de Caddy / reverse proxy
+app.set("trust proxy", 1);
+
 const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:3000")
   .split(",")
   .map((s) => s.trim())

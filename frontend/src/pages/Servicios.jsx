@@ -43,7 +43,7 @@ export default function Servicios() {
           <h1 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">Servicios</h1>
           <p className="text-slate-500 mt-1">{filtered.length} servicios en el catálogo</p>
         </div>
-        <Button data-testid="servicio-new" onClick={() => setEditing({ name: "", category: "Lavado", description: "", price: 0, unit: "kg", eta: "24h", active: true })} className="bg-blue-600 hover:bg-blue-700 gap-2 h-10">
+        <Button data-testid="servicio-new" onClick={() => setEditing({ name: "", category: "Lavado", description: "", price: 0, unit: "kg", eta: "24h", active: true })} className="bg-brand hover:bg-brand-dark gap-2 h-10">
           <Plus className="w-4 h-4" /> Nuevo servicio
         </Button>
       </div>
@@ -54,7 +54,7 @@ export default function Servicios() {
         {filtered.map(s => (
           <div key={s.id} className="bg-white border border-slate-200 rounded-xl p-4 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
-              <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold">{s.category.slice(0, 2).toUpperCase()}</div>
+              <div className="w-10 h-10 rounded-lg bg-brand-soft text-brand flex items-center justify-center text-xs font-bold">{s.category.slice(0, 2).toUpperCase()}</div>
               <Switch data-testid={`servicio-toggle-${s.id}`} checked={s.active} onCheckedChange={() => toggleActive(s.id)} />
             </div>
             <div className="mt-3">
@@ -93,7 +93,7 @@ export default function Servicios() {
               </div>
             </div>
           )}
-          <DialogFooter><Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button><Button data-testid="edit-servicio-save" onClick={save} className="bg-blue-600 hover:bg-blue-700">Guardar</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button><Button data-testid="edit-servicio-save" onClick={save} className="bg-brand hover:bg-brand-dark">Guardar</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

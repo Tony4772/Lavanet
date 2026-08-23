@@ -74,7 +74,7 @@ export default function ModoTurno() {
     <div data-testid="turno-page" className={`space-y-6 animate-fadeInUp ${tablet ? "text-base" : ""}`}>
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <div className="text-xs uppercase tracking-widest text-blue-600 font-semibold">Panel operativo</div>
+          <div className="text-xs uppercase tracking-widest text-brand font-semibold">Panel operativo</div>
           <h1 className={`font-heading font-extrabold text-slate-900 tracking-tight mt-1 ${tablet ? "text-4xl md:text-5xl" : "text-3xl md:text-4xl"}`}>Modo Turno</h1>
           <p className={`text-slate-500 mt-1 ${tablet ? "text-base" : ""}`}>{totalPending} órdenes en las etapas visibles · Rol: <span className="font-semibold text-slate-700">{currentUser?.role}</span></p>
         </div>
@@ -90,17 +90,17 @@ export default function ModoTurno() {
           <button
             data-testid="turno-tablet-toggle"
             onClick={toggleTablet}
-            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold transition-colors ${tablet ? "border-blue-600 bg-blue-600 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-blue-400"}`}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border text-xs font-semibold transition-colors ${tablet ? "border-brand bg-brand text-white" : "border-slate-200 bg-white text-slate-600 hover:border-brand-muted"}`}
           >
             <Monitor className="w-4 h-4" /> Tablero tablet
           </button>
           <div className="inline-flex bg-white border border-slate-200 rounded-lg p-1">
             <button data-testid="turno-scope-mi" onClick={() => setScope("mi")}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${scope === "mi" ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${scope === "mi" ? "bg-brand text-white" : "text-slate-600 hover:bg-slate-50"}`}>
               <Filter className="w-3 h-3 inline mr-1" /> Mi turno
             </button>
             <button data-testid="turno-scope-todas" onClick={() => setScope("todas")}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${scope === "todas" ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-50"}`}>
+              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${scope === "todas" ? "bg-brand text-white" : "text-slate-600 hover:bg-slate-50"}`}>
               <Users className="w-3 h-3 inline mr-1" /> Ver todas
             </button>
           </div>
@@ -123,10 +123,10 @@ export default function ModoTurno() {
                   <div
                     key={o.id}
                     data-testid={`turno-card-${o.number}`}
-                    className={`bg-white border rounded-lg hover:shadow-md hover:border-blue-400 transition-all ${tablet ? "p-4" : "p-2.5"} ${late ? "border-rose-300 bg-rose-50/30" : "border-slate-200"}`}
+                    className={`bg-white border rounded-lg hover:shadow-md hover:border-brand-muted transition-all ${tablet ? "p-4" : "p-2.5"} ${late ? "border-rose-300 bg-rose-50/30" : "border-slate-200"}`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className={`font-mono font-bold text-blue-600 ${tablet ? "text-base" : "text-xs"}`}>{o.number}</span>
+                      <span className={`font-mono font-bold text-brand ${tablet ? "text-base" : "text-xs"}`}>{o.number}</span>
                       <span className={`inline-flex items-center gap-1 font-semibold ${late ? "text-rose-600" : "text-slate-500"} ${tablet ? "text-xs" : "text-[10px]"}`}>
                         <Clock className={tablet ? "w-3.5 h-3.5" : "w-3 h-3"} />{elapsed(o.timeline[o.timeline.length - 1]?.at || o.createdAt)}
                       </span>
@@ -137,7 +137,7 @@ export default function ModoTurno() {
                       <Button
                         data-testid={`turno-advance-${o.number}`}
                         onClick={() => advance(o)}
-                        className={`w-full mt-2 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 font-semibold ${tablet ? "h-12 text-base" : "h-7 text-xs"}`}
+                        className={`w-full mt-2 bg-brand-soft text-brand-dark border border-brand-light hover:bg-brand-soft font-semibold ${tablet ? "h-12 text-base" : "h-7 text-xs"}`}
                       >
                         Avanzar a {NEXT_OF[stage]} <ChevronRight className={tablet ? "w-5 h-5 ml-1" : "w-3 h-3 ml-1"} />
                       </Button>

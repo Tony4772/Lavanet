@@ -26,7 +26,7 @@ export default function Productos() {
     <div data-testid="productos-page" className="space-y-6 animate-fadeInUp">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h1 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">Productos</h1><p className="text-slate-500 mt-1">{filtered.length} productos</p></div>
-        <Button data-testid="producto-new" onClick={() => setEditing({ name: "", sku: "", category: "Detergentes", price: 0, stock: 0, minStock: 5 })} className="bg-blue-600 hover:bg-blue-700 gap-2 h-10"><Plus className="w-4 h-4" /> Nuevo producto</Button>
+        <Button data-testid="producto-new" onClick={() => setEditing({ name: "", sku: "", category: "Detergentes", price: 0, stock: 0, minStock: 5 })} className="bg-brand hover:bg-brand-dark gap-2 h-10"><Plus className="w-4 h-4" /> Nuevo producto</Button>
       </div>
       <div className="bg-white border border-slate-200 rounded-xl p-4"><div className="relative"><Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><Input placeholder="Buscar por nombre o SKU..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9 h-10 max-w-md" /></div></div>
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -85,7 +85,7 @@ export default function Productos() {
               </div>
             </div>
           )}
-          <DialogFooter><Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button><Button data-testid="edit-producto-save" onClick={save} className="bg-blue-600 hover:bg-blue-700">Guardar</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button><Button data-testid="edit-producto-save" onClick={save} className="bg-brand hover:bg-brand-dark">Guardar</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

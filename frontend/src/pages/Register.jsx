@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Waves, Building2, User, Lock, Mail, ArrowRight } from "lucide-react";
+import { Building2, User, Lock, Mail, ArrowRight } from "lucide-react";
 import { useApp } from "../context/AppContext";
+import BrandLogo from "../components/BrandLogo";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
@@ -27,7 +28,7 @@ export default function Register() {
     try {
       const res = await registerAccount(form);
       if (res.ok) {
-        toast.success("Cuenta creada. ¡Bienvenido a LAVANET!");
+        toast.success("Cuenta creada. ¡Bienvenido a lavanet!");
         navigate("/");
       } else {
         toast.error(res.error);
@@ -39,19 +40,14 @@ export default function Register() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-slate-50">
-      <div className="hidden lg:flex relative bg-slate-900 items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950" />
-        <div className="relative z-10 px-12 max-w-lg">
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center">
-              <Waves className="w-7 h-7 text-white" strokeWidth={2.5} />
-            </div>
-            <div className="text-white font-heading font-extrabold text-2xl">LAVANET</div>
-          </div>
+      <div className="hidden lg:flex relative bg-black items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-brand-dark/40" />
+        <div className="relative z-10 px-12 max-w-lg text-center">
+          <BrandLogo imgClassName="h-28 mx-auto" className="mb-10" />
           <h1 className="text-white font-heading text-4xl font-extrabold leading-tight tracking-tight">
             Registra tu lavandería y empieza hoy.
           </h1>
-          <p className="text-slate-300 mt-6 text-lg leading-relaxed">
+          <p className="text-brand-muted mt-6 text-lg leading-relaxed">
             Crea tu negocio, invita a tu equipo y gestiona órdenes, caja e inventario en un solo lugar.
           </p>
         </div>
@@ -59,12 +55,16 @@ export default function Register() {
 
       <div className="flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md">
+          <div className="lg:hidden mb-8">
+            <BrandLogo framed imgClassName="h-14" />
+          </div>
+
           <h2 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">
             Crear cuenta
           </h2>
           <p className="text-slate-500 mt-2">
             ¿Ya tienes cuenta?{" "}
-            <Link to="/login" className="text-blue-600 font-semibold hover:underline">
+            <Link to="/login" className="text-brand font-semibold hover:underline">
               Iniciar sesión
             </Link>
           </p>
@@ -139,7 +139,7 @@ export default function Register() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 bg-blue-600 hover:bg-blue-700 gap-2 font-semibold"
+              className="w-full h-11 gap-2 font-semibold"
             >
               {loading ? "Creando..." : (
                 <>

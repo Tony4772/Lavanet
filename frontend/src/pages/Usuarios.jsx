@@ -68,7 +68,7 @@ export default function Usuarios() {
   const toggleActive = (id) => updateCollection("users", prev => prev.map(u => u.id === id ? { ...u, active: !u.active } : u));
 
   const roleStyle = {
-    "Administrador": "bg-blue-100 text-blue-700 border-blue-200",
+    "Administrador": "bg-brand-soft text-brand-dark border-brand-light",
     "Cajero": "bg-emerald-100 text-emerald-700 border-emerald-200",
     "Recepción": "bg-violet-100 text-violet-700 border-violet-200",
     "Operador": "bg-amber-100 text-amber-800 border-amber-200",
@@ -78,7 +78,7 @@ export default function Usuarios() {
     <div data-testid="usuarios-page" className="space-y-6 animate-fadeInUp">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h1 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">Usuarios</h1><p className="text-slate-500 mt-1">{data.users.length} usuarios en el sistema</p></div>
-        <Button data-testid="usuario-new" onClick={() => setEditing({ name: "", username: "", password: "", email: "", role: "Cajero", active: true })} className="bg-blue-600 hover:bg-blue-700 gap-2 h-10"><Plus className="w-4 h-4" /> Nuevo usuario</Button>
+        <Button data-testid="usuario-new" onClick={() => setEditing({ name: "", username: "", password: "", email: "", role: "Cajero", active: true })} className="bg-brand hover:bg-brand-dark gap-2 h-10"><Plus className="w-4 h-4" /> Nuevo usuario</Button>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -94,7 +94,7 @@ export default function Usuarios() {
                 <tr key={u.id} className="border-t border-slate-100 hover:bg-slate-50/60">
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center text-xs font-bold">{u.name.split(" ").map(s => s[0]).slice(0, 2).join("")}</div>
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand to-brand-dark text-white flex items-center justify-center text-xs font-bold">{u.name.split(" ").map(s => s[0]).slice(0, 2).join("")}</div>
                       <div><div className="text-sm font-semibold">{u.name}</div><div className="text-xs text-slate-500">{u.email}</div></div>
                     </div>
                   </td>
@@ -134,7 +134,7 @@ export default function Usuarios() {
               </div>
             </div>
           )}
-          <DialogFooter><Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button><Button data-testid="edit-usuario-save" onClick={save} className="bg-blue-600 hover:bg-blue-700">Guardar</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button><Button data-testid="edit-usuario-save" onClick={save} className="bg-brand hover:bg-brand-dark">Guardar</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

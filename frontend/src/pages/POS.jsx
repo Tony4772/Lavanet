@@ -162,7 +162,7 @@ export default function POS() {
               {["Todas", ...SERVICE_CATEGORIES].map(c => (
                 <button key={c} data-testid={`pos-cat-${c}`} onClick={() => setCategory(c)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors border ${
-                    category === c ? "bg-blue-600 text-white border-blue-600" : "bg-white text-slate-600 border-slate-200 hover:border-blue-300"
+                    category === c ? "bg-brand text-white border-brand" : "bg-white text-slate-600 border-slate-200 hover:border-brand-light"
                   }`}>
                   {c}
                 </button>
@@ -176,10 +176,10 @@ export default function POS() {
               key={s.id}
               data-testid={`pos-service-${s.id}`}
               onClick={() => addToCart(s)}
-              className="text-left bg-white border border-slate-200 rounded-xl p-4 hover:border-blue-500 hover:shadow-md hover:-translate-y-0.5 transition-all group"
+              className="text-left bg-white border border-slate-200 rounded-xl p-4 hover:border-brand hover:shadow-md hover:-translate-y-0.5 transition-all group"
             >
               <div className="flex items-start justify-between">
-                <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center text-xs font-bold">
+                <div className="w-10 h-10 rounded-lg bg-brand-soft text-brand flex items-center justify-center text-xs font-bold">
                   {s.category.slice(0, 2).toUpperCase()}
                 </div>
                 <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">{s.eta}</span>
@@ -210,7 +210,7 @@ export default function POS() {
               <div className="mt-2 bg-white border border-slate-200 rounded-lg p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold">
+                    <div className="w-8 h-8 rounded-full bg-brand-soft text-brand-dark flex items-center justify-center text-xs font-bold">
                       {customer.name.split(" ").map(s => s[0]).slice(0,2).join("")}
                     </div>
                     <div className="min-w-0">
@@ -247,7 +247,7 @@ export default function POS() {
                     ))}
                   </div>
                 )}
-                <button data-testid="pos-new-customer" onClick={() => setShowNewCustomer(true)} className="w-full flex items-center justify-center gap-2 text-xs text-blue-600 hover:text-blue-700 font-semibold border border-dashed border-blue-300 rounded-lg py-2">
+                <button data-testid="pos-new-customer" onClick={() => setShowNewCustomer(true)} className="w-full flex items-center justify-center gap-2 text-xs text-brand hover:text-brand-dark font-semibold border border-dashed border-brand-light rounded-lg py-2">
                   <UserPlus className="w-3.5 h-3.5" /> Crear cliente rápido
                 </button>
               </div>
@@ -305,7 +305,7 @@ export default function POS() {
               ) : (
                 <>
                   <input data-testid="pos-coupon-input" placeholder="Código cupón" value={couponInput} onChange={(e) => setCouponInput(e.target.value.toUpperCase())} className="flex-1 text-sm border border-slate-200 rounded h-7 px-2 font-mono uppercase" />
-                  <button data-testid="pos-coupon-apply" onClick={applyCoupon} className="text-[10px] font-semibold text-blue-600 hover:text-blue-700">APLICAR</button>
+                  <button data-testid="pos-coupon-apply" onClick={applyCoupon} className="text-[10px] font-semibold text-brand hover:text-brand-dark">APLICAR</button>
                 </>
               )}
             </div>
@@ -340,7 +340,7 @@ export default function POS() {
               </div>
             )}
 
-            <Button data-testid="pos-checkout" onClick={handleCheckout} className="w-full h-11 bg-blue-600 hover:bg-blue-700 font-semibold mt-2">
+            <Button data-testid="pos-checkout" onClick={handleCheckout} className="w-full h-11 bg-brand hover:bg-brand-dark font-semibold mt-2">
               <CheckCircle2 className="w-4 h-4 mr-2" /> Cobrar y generar orden
             </Button>
           </div>
@@ -358,7 +358,7 @@ export default function POS() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewCustomer(false)}>Cancelar</Button>
-            <Button data-testid="new-customer-save" onClick={handleCreateCustomer} className="bg-blue-600 hover:bg-blue-700">Crear</Button>
+            <Button data-testid="new-customer-save" onClick={handleCreateCustomer} className="bg-brand hover:bg-brand-dark">Crear</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -374,7 +374,7 @@ export default function POS() {
           </DialogHeader>
           {createdOrder && (
             <div className="pt-2 divide-y divide-slate-100 border border-slate-200 rounded-lg overflow-hidden">
-              <div className="flex justify-between items-center text-sm px-4 py-3 bg-slate-50/40"><span className="text-slate-500">Número</span><span className="font-mono font-semibold text-blue-600">{createdOrder.number}</span></div>
+              <div className="flex justify-between items-center text-sm px-4 py-3 bg-slate-50/40"><span className="text-slate-500">Número</span><span className="font-mono font-semibold text-brand">{createdOrder.number}</span></div>
               <div className="flex justify-between items-center text-sm px-4 py-3"><span className="text-slate-500">Cliente</span><span className="font-semibold text-right">{createdOrder.customerName}</span></div>
               <div className="flex justify-between items-center text-sm px-4 py-3"><span className="text-slate-500">Total</span><span className="font-heading font-extrabold text-lg">{fmtMoney(createdOrder.total, currency)}</span></div>
               <div className="flex justify-between items-center text-sm px-4 py-3"><span className="text-slate-500">Método</span><span className="font-semibold">{createdOrder.paymentMethod}</span></div>
@@ -383,7 +383,7 @@ export default function POS() {
           )}
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setConfirmOpen(false)}>Cerrar</Button>
-            <Button data-testid="print-ticket-btn" onClick={() => { setConfirmOpen(false); setTicketOpen(true); }} className="bg-blue-600 hover:bg-blue-700">
+            <Button data-testid="print-ticket-btn" onClick={() => { setConfirmOpen(false); setTicketOpen(true); }} className="bg-brand hover:bg-brand-dark">
               <Printer className="w-4 h-4 mr-2" /> Ver / imprimir ticket
             </Button>
           </DialogFooter>

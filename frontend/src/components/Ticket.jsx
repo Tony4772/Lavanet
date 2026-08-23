@@ -62,7 +62,7 @@ export default function Ticket({ order, config }) {
         </div>
       </div>
       <div className="mt-4 flex justify-center no-print">
-        <Button data-testid="ticket-print-btn" onClick={handlePrint} className="bg-blue-600 hover:bg-blue-700 gap-2">
+        <Button data-testid="ticket-print-btn" onClick={handlePrint} className="bg-brand hover:bg-brand-dark gap-2">
           <Printer className="w-4 h-4" /> Imprimir
         </Button>
       </div>

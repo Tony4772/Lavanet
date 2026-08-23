@@ -1,0 +1,42 @@
+# Lavanet en la misma Lightsail que CAE / Ventax.
+# Red externa cae_default para que Caddy haga reverse_proxy a "lavanet".
+services:
+  mongo:
+    image: mongo:7
+    container_name: lavanet-mongo
+    restart: unless-stopped
+    volumes:
+      - lavanet_mongo_data:/data/db
+    networks:
+      - cae_default
+    mem_limit: 400m
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  lavanet:
+    build:
+      context: .
+      args:
+        REACT_APP_BACKEND_URL: https://lavanet.ebyzom.com
+        REACT_APP_SHOW_DEMOS: "false"
+    container_name: lavanet-app
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - cae_default
+    mem_limit: 350m
+    expose:
+      - "3000"
+
+networks:
+  cae_default:
+    external: true
+
+volumes:
+  lavanet_mongo_data:

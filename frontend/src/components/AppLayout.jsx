@@ -3,7 +3,7 @@ import { NavLink, useNavigate, Outlet } from "react-router-dom";
 import {
   LayoutDashboard, ShoppingCart, ClipboardList, Users, Sparkles, Package,
   Warehouse, Truck, Wallet, BarChart3, UserCog, Settings, Bell, Search,
-  LogOut, Menu, X, ChevronDown, Waves, Workflow,
+  LogOut, Menu, X, ChevronDown, Workflow,
 } from "lucide-react";
 import { useApp, fmtDate, canAccess } from "../context/AppContext";
 import {
@@ -14,6 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import ThemeToggle from "./ThemeToggle";
+import BrandLogo from "./BrandLogo";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, testId: "nav-dashboard" },
@@ -80,19 +81,10 @@ export default function AppLayout() {
 
   const SidebarContent = () => (
     <>
-      <div className="px-6 pt-6 pb-8">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-md">
-            <Waves className="w-5 h-5" strokeWidth={2.5} />
-          </div>
-          <div>
-            <div className="text-white font-heading font-extrabold text-lg leading-none tracking-tight">
-              LAVANET
-            </div>
-            <div className="text-slate-400 text-[10px] uppercase tracking-widest mt-1 truncate max-w-[160px]">
-              {businessName}
-            </div>
-          </div>
+      <div className="px-5 pt-5 pb-6">
+        <BrandLogo imgClassName="h-12 w-full max-w-[180px]" />
+        <div className="text-brand-muted text-[10px] uppercase tracking-widest mt-2 truncate px-1">
+          {businessName}
         </div>
       </div>
       <nav className="px-3 flex-1 overflow-y-auto pb-4">
@@ -106,8 +98,8 @@ export default function AppLayout() {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-lg mb-0.5 text-sm font-medium transition-colors ${
                 isActive
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/60"
+                  ? "bg-brand text-white shadow-sm shadow-brand/30"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
               }`
             }
           >
@@ -116,9 +108,9 @@ export default function AppLayout() {
           </NavLink>
         ))}
       </nav>
-      <div className="px-4 py-4 border-t border-slate-800">
+      <div className="px-4 py-4 border-t border-white/10">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm">
+          <div className="w-9 h-9 rounded-full bg-brand flex items-center justify-center text-white font-semibold text-sm">
             {(currentUser?.name || "U")
               .split(" ")
               .map((s) => s[0])
@@ -138,7 +130,7 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-slate-900 flex-col z-40">
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-black flex-col z-40">
         <SidebarContent />
       </aside>
 
@@ -148,7 +140,7 @@ export default function AppLayout() {
             className="lg:hidden fixed inset-0 bg-black/50 z-40"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="lg:hidden fixed inset-y-0 left-0 w-64 bg-slate-900 flex flex-col z-50">
+          <aside className="lg:hidden fixed inset-y-0 left-0 w-64 bg-black flex flex-col z-50">
             <button
               data-testid="sidebar-close"
               className="absolute top-4 right-4 text-slate-400"
@@ -180,7 +172,7 @@ export default function AppLayout() {
                   placeholder="Buscar órdenes, clientes, servicios..."
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  className="pl-9 h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-blue-500"
+                  className="pl-9 h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-brand"
                 />
               </div>
             </PopoverTrigger>
@@ -215,7 +207,7 @@ export default function AppLayout() {
               <Button
                 data-testid="topbar-new-order"
                 onClick={() => navigate("/pos")}
-                className="hidden md:inline-flex bg-blue-600 hover:bg-blue-700 gap-2 h-10"
+                className="hidden md:inline-flex bg-brand hover:bg-brand-dark gap-2 h-10"
               >
                 <ShoppingCart className="w-4 h-4" /> Nueva Venta
               </Button>
@@ -265,7 +257,7 @@ export default function AppLayout() {
                   data-testid="profile-menu"
                   className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
-                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-semibold">
+                  <div className="w-8 h-8 rounded-full bg-brand flex items-center justify-center text-white text-xs font-semibold">
                     {(currentUser?.name || "U")
                       .split(" ")
                       .map((s) => s[0])

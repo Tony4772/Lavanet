@@ -61,21 +61,21 @@ export default function Caja() {
             <Button data-testid="caja-close" onClick={doClose} className="bg-rose-600 hover:bg-rose-700 gap-2 h-10"><Lock className="w-4 h-4" /> Cerrar caja</Button>
           </div>
         ) : (
-          <Button data-testid="caja-open" onClick={() => setOpenOpen(true)} className="bg-blue-600 hover:bg-blue-700 gap-2 h-10"><Unlock className="w-4 h-4" /> Abrir caja</Button>
+          <Button data-testid="caja-open" onClick={() => setOpenOpen(true)} className="bg-brand hover:bg-brand-dark gap-2 h-10"><Unlock className="w-4 h-4" /> Abrir caja</Button>
         )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-xl p-5"><div className="text-xs uppercase tracking-wider text-slate-500 font-semibold">Saldo inicial</div><div className="mt-2 font-heading font-extrabold text-2xl">{fmtMoney(cash.openingBalance, currency)}</div></div>
         <div className="bg-white border border-slate-200 rounded-xl p-5"><div className="text-xs uppercase tracking-wider text-slate-500 font-semibold flex items-center gap-1"><DollarSign className="w-3 h-3" /> Efectivo</div><div className="mt-2 font-heading font-extrabold text-2xl text-emerald-600">{fmtMoney(stats.cash, currency)}</div></div>
-        <div className="bg-white border border-slate-200 rounded-xl p-5"><div className="text-xs uppercase tracking-wider text-slate-500 font-semibold">Tarjeta</div><div className="mt-2 font-heading font-extrabold text-2xl text-blue-600">{fmtMoney(stats.card, currency)}</div></div>
+        <div className="bg-white border border-slate-200 rounded-xl p-5"><div className="text-xs uppercase tracking-wider text-slate-500 font-semibold">Tarjeta</div><div className="mt-2 font-heading font-extrabold text-2xl text-brand">{fmtMoney(stats.card, currency)}</div></div>
         <div className="bg-white border border-slate-200 rounded-xl p-5"><div className="text-xs uppercase tracking-wider text-slate-500 font-semibold">Yape/Plin/Transf.</div><div className="mt-2 font-heading font-extrabold text-2xl text-violet-600">{fmtMoney(stats.digital, currency)}</div></div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5"><div className="flex items-center gap-2 text-emerald-700 text-xs uppercase font-semibold"><TrendingUp className="w-4 h-4" /> Total ingresos</div><div className="mt-2 font-heading font-extrabold text-2xl text-emerald-900">{fmtMoney(stats.cash + stats.card + stats.digital + stats.other, currency)}</div></div>
         <div className="bg-rose-50 border border-rose-200 rounded-xl p-5"><div className="flex items-center gap-2 text-rose-700 text-xs uppercase font-semibold"><TrendingDown className="w-4 h-4" /> Gastos</div><div className="mt-2 font-heading font-extrabold text-2xl text-rose-900">{fmtMoney(stats.expenses, currency)}</div></div>
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5"><div className="flex items-center gap-2 text-blue-700 text-xs uppercase font-semibold"><Wallet className="w-4 h-4" /> Saldo esperado</div><div className="mt-2 font-heading font-extrabold text-2xl text-blue-900">{fmtMoney(stats.expected, currency)}</div></div>
+        <div className="bg-brand-soft border border-brand-light rounded-xl p-5"><div className="flex items-center gap-2 text-brand-dark text-xs uppercase font-semibold"><Wallet className="w-4 h-4" /> Saldo esperado</div><div className="mt-2 font-heading font-extrabold text-2xl text-brand-dark">{fmtMoney(stats.expected, currency)}</div></div>
       </div>
 
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -109,7 +109,7 @@ export default function Caja() {
         <DialogContent className="sm:max-w-sm">
           <DialogHeader><DialogTitle>Apertura de caja</DialogTitle></DialogHeader>
           <div className="space-y-3"><Label>Saldo inicial ({currency})</Label><Input data-testid="caja-opening-balance" type="number" value={balance} onChange={(e) => setBalance(e.target.value)} /></div>
-          <DialogFooter><Button variant="outline" onClick={() => setOpenOpen(false)}>Cancelar</Button><Button data-testid="caja-confirm-open" onClick={doOpen} className="bg-blue-600 hover:bg-blue-700">Abrir</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setOpenOpen(false)}>Cancelar</Button><Button data-testid="caja-confirm-open" onClick={doOpen} className="bg-brand hover:bg-brand-dark">Abrir</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -132,7 +132,7 @@ export default function Caja() {
             <div><Label>Monto</Label><Input data-testid="mov-caja-amount" type="number" step="0.5" value={mov.amount} onChange={(e) => setMov(x => ({ ...x, amount: e.target.value }))} /></div>
             <div><Label>Nota</Label><Input data-testid="mov-caja-note" value={mov.note} onChange={(e) => setMov(x => ({ ...x, note: e.target.value }))} /></div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setOpenMov(false)}>Cancelar</Button><Button data-testid="mov-caja-save" onClick={addMov} className="bg-blue-600 hover:bg-blue-700">Registrar</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setOpenMov(false)}>Cancelar</Button><Button data-testid="mov-caja-save" onClick={addMov} className="bg-brand hover:bg-brand-dark">Registrar</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

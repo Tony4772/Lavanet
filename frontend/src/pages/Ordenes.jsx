@@ -115,7 +115,7 @@ export default function Ordenes() {
             <tbody>
               {rows.map(o => (
                 <tr key={o.id} data-testid={`orden-row-${o.number}`} className="border-t border-slate-100 hover:bg-slate-50/60">
-                  <td className="px-6 py-3.5"><span className="font-mono text-sm font-semibold text-blue-600">{o.number}</span></td>
+                  <td className="px-6 py-3.5"><span className="font-mono text-sm font-semibold text-brand">{o.number}</span></td>
                   <td className="px-6 py-3.5 text-sm text-slate-700">{o.customerName}</td>
                   <td className="px-6 py-3.5 text-sm text-slate-600">{fmtDate(o.createdAt)}</td>
                   <td className="px-6 py-3.5 text-sm text-slate-600">{fmtDate(o.promisedAt)}</td>
@@ -128,7 +128,7 @@ export default function Ordenes() {
                     </span>
                   </td>
                   <td className="px-6 py-3.5 text-right">
-                    <button data-testid={`orden-view-${o.number}`} onClick={() => openDetail(o)} className="text-blue-600 hover:text-blue-700"><Eye className="w-4 h-4" /></button>
+                    <button data-testid={`orden-view-${o.number}`} onClick={() => openDetail(o)} className="text-brand hover:text-brand-dark"><Eye className="w-4 h-4" /></button>
                   </td>
                 </tr>
               ))}
@@ -147,7 +147,7 @@ export default function Ordenes() {
               <DialogHeader>
                 <div className="flex items-center gap-3">
                   <div>
-                    <DialogTitle className="font-mono text-blue-600 text-xl">{selected.number}</DialogTitle>
+                    <DialogTitle className="font-mono text-brand text-xl">{selected.number}</DialogTitle>
                     <p className="text-sm text-slate-500 mt-1">{selected.customerName} · {fmtDate(selected.createdAt, true)}</p>
                   </div>
                 </div>
@@ -168,13 +168,13 @@ export default function Ordenes() {
                           className={`shrink-0 flex flex-col items-center gap-1 group`}
                         >
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all ${
-                            active ? "bg-blue-600 text-white border-blue-600 ring-4 ring-blue-100" :
+                            active ? "bg-brand text-white border-brand ring-4 ring-brand-soft" :
                             done ? "bg-emerald-500 text-white border-emerald-500" :
-                            "bg-white text-slate-400 border-slate-200 group-hover:border-blue-400"
+                            "bg-white text-slate-400 border-slate-200 group-hover:border-brand-muted"
                           }`}>
                             {done && !active ? <CheckCircle2 className="w-4 h-4" /> : i + 1}
                           </div>
-                          <div className={`text-[10px] font-medium whitespace-nowrap ${active ? "text-blue-600" : done ? "text-slate-700" : "text-slate-400"}`}>{step}</div>
+                          <div className={`text-[10px] font-medium whitespace-nowrap ${active ? "text-brand" : done ? "text-slate-700" : "text-slate-400"}`}>{step}</div>
                         </button>
                         {i < TIMELINE.length - 1 && <div className={`h-0.5 flex-1 min-w-[10px] ${done ? "bg-emerald-500" : "bg-slate-200"}`} />}
                       </React.Fragment>
@@ -188,8 +188,8 @@ export default function Ordenes() {
                   <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Método de pago</div>
                   <div className="mt-1 font-semibold">{selected.paymentMethod}</div>
                 </div>
-                <div className="bg-blue-50 border border-blue-100 rounded-lg p-3">
-                  <div className="text-xs text-blue-700 uppercase tracking-wider font-semibold flex items-center gap-1">
+                <div className="bg-brand-soft border border-brand-soft rounded-lg p-3">
+                  <div className="text-xs text-brand-dark uppercase tracking-wider font-semibold flex items-center gap-1">
                     <Calendar className="w-3 h-3" /> Entrega prometida
                   </div>
                   <div className="mt-1.5 flex items-center gap-2">
@@ -205,12 +205,12 @@ export default function Ordenes() {
                       onClick={savePromised}
                       disabled={!newPromised || toLocalInput(selected.promisedAt) === newPromised}
                       size="sm"
-                      className="h-8 bg-blue-600 hover:bg-blue-700 shrink-0 px-2"
+                      className="h-8 bg-brand hover:bg-brand-dark shrink-0 px-2"
                     >
                       <Save className="w-3.5 h-3.5" />
                     </Button>
                   </div>
-                  <div className="text-[10px] text-blue-800 mt-1.5">Al guardar se te ofrecerá avisar al cliente por WhatsApp</div>
+                  <div className="text-[10px] text-brand-dark mt-1.5">Al guardar se te ofrecerá avisar al cliente por WhatsApp</div>
                   {rescheduleLink && (
                     <a
                       data-testid="whatsapp-reschedule"
@@ -270,7 +270,7 @@ export default function Ordenes() {
                 <div className="space-y-2 max-h-40 overflow-y-auto">
                   {selected.timeline.map((t, i) => (
                     <div key={i} className="flex items-start gap-2 text-sm">
-                      <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-brand-soft0 mt-2" />
                       <div>
                         <div className="font-medium">{t.status}</div>
                         <div className="text-xs text-slate-500">{fmtDate(t.at, true)} · {t.by}</div>

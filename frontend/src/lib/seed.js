@@ -14,7 +14,7 @@ export const ORDER_STATUSES = [
 export const STATUS_STYLE = {
   "Recibida": "bg-slate-100 text-slate-700 border-slate-200",
   "Clasificación": "bg-indigo-100 text-indigo-700 border-indigo-200",
-  "En lavado": "bg-blue-100 text-blue-700 border-blue-200",
+  "En lavado": "bg-brand-soft text-brand-dark border-brand-light",
   "En secado": "bg-yellow-100 text-yellow-800 border-yellow-200",
   "Planchado": "bg-orange-100 text-orange-800 border-orange-200",
   "Control de calidad": "bg-purple-100 text-purple-700 border-purple-200",
@@ -166,7 +166,7 @@ export const SEED_CONFIG = {
   tax: { name: "IGV", rate: 0.18, enabled: true },
   loyalty: { pointsPerSol: 1, pointsToSol: 20, enabled: true },
   notifications: { lowStock: true, newSale: true, orderReady: true, cashClose: true },
-  appearance: { primary: "azul", density: "cómoda" },
+  appearance: { primary: "morado", density: "cómoda" },
 };
 
 export const emptyBusinessBundle = (tenantId, businessName) => {

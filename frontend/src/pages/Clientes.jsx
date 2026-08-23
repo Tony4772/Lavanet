@@ -74,7 +74,7 @@ export default function Clientes() {
           <h1 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">Clientes</h1>
           <p className="text-slate-500 mt-1">{filtered.length} clientes registrados</p>
         </div>
-        <Button data-testid="cliente-new" onClick={() => setEditing({ name: "", phone: "", email: "", address: "" })} className="bg-blue-600 hover:bg-blue-700 gap-2 h-10">
+        <Button data-testid="cliente-new" onClick={() => setEditing({ name: "", phone: "", email: "", address: "" })} className="bg-brand hover:bg-brand-dark gap-2 h-10">
           <Plus className="w-4 h-4" /> Nuevo cliente
         </Button>
       </div>
@@ -103,7 +103,7 @@ export default function Clientes() {
                 <tr key={c.id} className="border-t border-slate-100 hover:bg-slate-50/60">
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center text-xs font-bold">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand to-brand-dark text-white flex items-center justify-center text-xs font-bold">
                         {c.name.split(" ").map(s => s[0]).slice(0, 2).join("")}
                       </div>
                       <div>
@@ -126,7 +126,7 @@ export default function Clientes() {
                   <td className="px-6 py-3.5 text-sm text-slate-600">{c.lastVisit ? fmtDate(c.lastVisit) : "-"}</td>
                   <td className="px-6 py-3.5 text-right">
                     <div className="inline-flex gap-1">
-                      <button data-testid={`cliente-view-${c.id}`} onClick={() => setViewingId(c.id)} className="p-1.5 rounded hover:bg-slate-100 text-blue-600"><Eye className="w-4 h-4" /></button>
+                      <button data-testid={`cliente-view-${c.id}`} onClick={() => setViewingId(c.id)} className="p-1.5 rounded hover:bg-slate-100 text-brand"><Eye className="w-4 h-4" /></button>
                       <button data-testid={`cliente-edit-${c.id}`} onClick={() => setEditing(c)} className="p-1.5 rounded hover:bg-slate-100 text-slate-600"><Edit2 className="w-4 h-4" /></button>
                       <button data-testid={`cliente-delete-${c.id}`} onClick={() => remove(c.id)} className="p-1.5 rounded hover:bg-slate-100 text-red-600"><Trash2 className="w-4 h-4" /></button>
                     </div>
@@ -152,7 +152,7 @@ export default function Clientes() {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)}>Cancelar</Button>
-            <Button data-testid="edit-cliente-save" onClick={save} className="bg-blue-600 hover:bg-blue-700">Guardar</Button>
+            <Button data-testid="edit-cliente-save" onClick={save} className="bg-brand hover:bg-brand-dark">Guardar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -163,7 +163,7 @@ export default function Clientes() {
             <>
               <DialogHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-bold">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-brand to-brand-dark text-white flex items-center justify-center font-bold">
                     {viewingLive.name.split(" ").map(s => s[0]).slice(0, 2).join("")}
                   </div>
                   <div>
@@ -186,7 +186,7 @@ export default function Clientes() {
               </div>
 
               {/* Ahorros y beneficios */}
-              <div className="bg-gradient-to-br from-emerald-50 to-blue-50 border border-emerald-100 rounded-xl p-4">
+              <div className="bg-gradient-to-br from-emerald-50 to-brand-soft border border-emerald-100 rounded-xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center">
                     <PiggyBank className="w-4 h-4" />
@@ -315,7 +315,7 @@ export default function Clientes() {
                     <div className="p-6 text-center text-sm text-slate-500">Sin órdenes</div>
                   ) : viewingLive.orders.map(o => (
                     <div key={o.id} className="p-3 border-b border-slate-100 last:border-0 flex items-center justify-between text-sm">
-                      <div><span className="font-mono text-blue-600 font-semibold">{o.number}</span><span className="text-xs text-slate-500 ml-2">{fmtDate(o.createdAt)}</span></div>
+                      <div><span className="font-mono text-brand font-semibold">{o.number}</span><span className="text-xs text-slate-500 ml-2">{fmtDate(o.createdAt)}</span></div>
                       <div className="font-semibold">{fmtMoney(o.total, currency)}</div>
                     </div>
                   ))}

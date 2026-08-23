@@ -74,7 +74,7 @@ export default function Configuracion() {
         <div><h1 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">Configuración</h1><p className="text-slate-500 mt-1">Ajustes generales del sistema</p></div>
         <div className="flex gap-2">
           <Button data-testid="config-reset" onClick={reset} variant="outline" className="h-10 gap-2"><RefreshCw className="w-4 h-4" /> Restaurar demo</Button>
-          <Button data-testid="config-save" onClick={save} className="bg-blue-600 hover:bg-blue-700 h-10 gap-2"><Save className="w-4 h-4" /> Guardar</Button>
+          <Button data-testid="config-save" onClick={save} className="bg-brand hover:bg-brand-dark h-10 gap-2"><Save className="w-4 h-4" /> Guardar</Button>
         </div>
       </div>
 
@@ -163,7 +163,7 @@ export default function Configuracion() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
               <div className="flex items-center gap-2">
-                <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center"><Mail className="w-5 h-5" /></div>
+                <div className="w-9 h-9 rounded-lg bg-brand-soft text-brand flex items-center justify-center"><Mail className="w-5 h-5" /></div>
                 <div>
                   <h3 className="font-heading font-bold text-slate-900">Envío automático diario</h3>
                   <p className="text-xs text-slate-500">Recibe el reporte del día por email cada noche</p>
@@ -186,7 +186,7 @@ export default function Configuracion() {
                   <Clock className="w-3.5 h-3.5" /> Último envío: {fmtDate(schedule.lastSentAt, true)}
                 </div>
               )}
-              <Button data-testid="report-send-now" onClick={sendReportNow} className="w-full bg-blue-600 hover:bg-blue-700 gap-2 h-11">
+              <Button data-testid="report-send-now" onClick={sendReportNow} className="w-full bg-brand hover:bg-brand-dark gap-2 h-11">
                 <Send className="w-4 h-4" /> Enviar reporte de hoy ahora
               </Button>
               <div className="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-lg p-2.5">

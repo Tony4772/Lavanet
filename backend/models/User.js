@@ -48,10 +48,9 @@ const UserSchema = new mongoose.Schema(
 UserSchema.index({ tenant: 1, email: 1 }, { unique: true });
 UserSchema.index({ tenant: 1, username: 1 }, { unique: true });
 
-UserSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+UserSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 12);
-  next();
 });
 
 UserSchema.methods.comparePassword = function (candidatePassword) {

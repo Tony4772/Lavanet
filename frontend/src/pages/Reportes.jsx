@@ -7,7 +7,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Button } from "../components/ui/button";
 
-const COLORS = ["#1A56DB", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4", "#EF4444", "#84CC16"];
+const COLORS = ["#7B1FA2", "#10B981", "#F59E0B", "#CE93D8", "#EC4899", "#A383B9", "#EF4444", "#84CC16"];
 
 export default function Reportes() {
   const { data } = useApp();
@@ -109,7 +109,7 @@ export default function Reportes() {
         </div>
         <div className="flex gap-2">
           <Button data-testid="reportes-export-csv" onClick={downloadCSV} variant="outline" className="h-10 gap-2"><FileDown className="w-4 h-4" /> Exportar CSV</Button>
-          <Button data-testid="reportes-print-pdf" onClick={printPDF} className="bg-blue-600 hover:bg-blue-700 h-10 gap-2"><Printer className="w-4 h-4" /> Imprimir / PDF</Button>
+          <Button data-testid="reportes-print-pdf" onClick={printPDF} className="bg-brand hover:bg-brand-dark h-10 gap-2"><Printer className="w-4 h-4" /> Imprimir / PDF</Button>
         </div>
       </div>
 
@@ -120,7 +120,7 @@ export default function Reportes() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-5"><div className="text-xs uppercase text-slate-500 font-semibold">Ingresos</div><div className="mt-2 font-heading font-extrabold text-2xl text-blue-600">{fmtMoney(range.revenue, currency)}</div></div>
+        <div className="bg-white border border-slate-200 rounded-xl p-5"><div className="text-xs uppercase text-slate-500 font-semibold">Ingresos</div><div className="mt-2 font-heading font-extrabold text-2xl text-brand">{fmtMoney(range.revenue, currency)}</div></div>
         <div className="bg-white border border-slate-200 rounded-xl p-5"><div className="text-xs uppercase text-slate-500 font-semibold">Costo estimado (55%)</div><div className="mt-2 font-heading font-extrabold text-2xl text-slate-700">{fmtMoney(range.estCost, currency)}</div></div>
         <div className="bg-white border border-slate-200 rounded-xl p-5"><div className="text-xs uppercase text-slate-500 font-semibold">Rentabilidad</div><div className="mt-2 font-heading font-extrabold text-2xl text-emerald-600">{fmtMoney(range.estProfit, currency)}</div></div>
       </div>
@@ -129,7 +129,7 @@ export default function Reportes() {
         <div className="bg-white border border-slate-200 rounded-xl p-6">
           <h3 className="font-heading font-bold text-slate-900 mb-4">Ventas diarias</h3>
           <ResponsiveContainer width="100%" height={260}>
-            <LineChart data={range.daily}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" /><XAxis dataKey="date" stroke="#94a3b8" fontSize={11} /><YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `S/${v}`} /><Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }} formatter={(v) => [`${currency} ${v}`, "Ventas"]} /><Line type="monotone" dataKey="total" stroke="#1A56DB" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} /></LineChart>
+            <LineChart data={range.daily}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" /><XAxis dataKey="date" stroke="#94a3b8" fontSize={11} /><YAxis stroke="#94a3b8" fontSize={11} tickFormatter={(v) => `S/${v}`} /><Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }} formatter={(v) => [`${currency} ${v}`, "Ventas"]} /><Line type="monotone" dataKey="total" stroke="#7B1FA2" strokeWidth={2.5} dot={{ r: 3 }} activeDot={{ r: 5 }} /></LineChart>
           </ResponsiveContainer>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-6">
@@ -144,7 +144,7 @@ export default function Reportes() {
         <div className="bg-white border border-slate-200 rounded-xl p-6">
           <h3 className="font-heading font-bold text-slate-900 mb-4">Servicios más vendidos</h3>
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={range.topSvc} layout="vertical" margin={{ left: 10 }}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} /><XAxis type="number" stroke="#94a3b8" fontSize={11} /><YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={10} width={140} /><Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }} /><Bar dataKey="qty" fill="#8B5CF6" radius={[0, 6, 6, 0]} /></BarChart>
+            <BarChart data={range.topSvc} layout="vertical" margin={{ left: 10 }}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} /><XAxis type="number" stroke="#94a3b8" fontSize={11} /><YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={10} width={140} /><Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }} /><Bar dataKey="qty" fill="#CE93D8" radius={[0, 6, 6, 0]} /></BarChart>
           </ResponsiveContainer>
         </div>
         <div className="bg-white border border-slate-200 rounded-xl p-6">

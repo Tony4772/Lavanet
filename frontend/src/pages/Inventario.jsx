@@ -41,7 +41,7 @@ export default function Inventario() {
     <div data-testid="inventario-page" className="space-y-6 animate-fadeInUp">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h1 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">Inventario</h1><p className="text-slate-500 mt-1">Control de stock y movimientos</p></div>
-        <Button data-testid="inventario-new-mov" onClick={() => setOpenMov(true)} className="bg-blue-600 hover:bg-blue-700 gap-2 h-10">Registrar movimiento</Button>
+        <Button data-testid="inventario-new-mov" onClick={() => setOpenMov(true)} className="bg-brand hover:bg-brand-dark gap-2 h-10">Registrar movimiento</Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -95,7 +95,7 @@ export default function Inventario() {
               <div className="p-8 text-center text-sm text-slate-500">Sin movimientos aún</div>
             ) : (data.inventoryLog || []).map(l => (
               <div key={l.id} className="p-3 border-b border-slate-100 last:border-0 flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${l.type === "entrada" ? "bg-emerald-100 text-emerald-600" : l.type === "salida" ? "bg-rose-100 text-rose-600" : "bg-blue-100 text-blue-600"}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${l.type === "entrada" ? "bg-emerald-100 text-emerald-600" : l.type === "salida" ? "bg-rose-100 text-rose-600" : "bg-brand-soft text-brand"}`}>
                   {l.type === "entrada" ? <ArrowUp className="w-4 h-4" /> : l.type === "salida" ? <ArrowDown className="w-4 h-4" /> : <Package className="w-4 h-4" />}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -128,7 +128,7 @@ export default function Inventario() {
             <div><Label>Cantidad</Label><Input data-testid="mov-qty" type="number" value={mov.qty} onChange={(e) => setMov(x => ({ ...x, qty: e.target.value }))} /></div>
             <div><Label>Nota</Label><Input data-testid="mov-note" value={mov.note} onChange={(e) => setMov(x => ({ ...x, note: e.target.value }))} placeholder="Motivo del movimiento..." /></div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setOpenMov(false)}>Cancelar</Button><Button data-testid="mov-save" onClick={registerMov} className="bg-blue-600 hover:bg-blue-700">Registrar</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setOpenMov(false)}>Cancelar</Button><Button data-testid="mov-save" onClick={registerMov} className="bg-brand hover:bg-brand-dark">Registrar</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

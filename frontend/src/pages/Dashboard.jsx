@@ -14,7 +14,7 @@ import { Button } from "../components/ui/button";
 
 const KpiCard = ({ label, value, hint, delta, icon: Icon, tone = "blue", testId }) => {
   const tones = {
-    blue: "bg-blue-50 text-blue-600",
+    blue: "bg-brand-soft text-brand",
     emerald: "bg-emerald-50 text-emerald-600",
     amber: "bg-amber-50 text-amber-600",
     violet: "bg-violet-50 text-violet-600",
@@ -42,7 +42,7 @@ const KpiCard = ({ label, value, hint, delta, icon: Icon, tone = "blue", testId 
   );
 };
 
-const CHART_COLORS = ["#1A56DB", "#10B981", "#F59E0B", "#8B5CF6", "#EC4899", "#06B6D4", "#EF4444"];
+const CHART_COLORS = ["#7B1FA2", "#10B981", "#F59E0B", "#CE93D8", "#EC4899", "#A383B9", "#EF4444"];
 
 export default function Dashboard() {
   const { data, currentUser } = useApp();
@@ -94,13 +94,13 @@ export default function Dashboard() {
     <div data-testid="dashboard-page" className="space-y-6 animate-fadeInUp">
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
         <div>
-          <div className="text-xs uppercase tracking-widest text-blue-600 font-semibold">Panel ejecutivo</div>
+          <div className="text-xs uppercase tracking-widest text-brand font-semibold">Panel ejecutivo</div>
           <h1 className="font-heading text-3xl md:text-4xl font-extrabold text-slate-900 mt-1 tracking-tight">
             Hola, {currentUser?.name?.split(" ")[0] || "Usuario"} 👋
           </h1>
           <p className="text-slate-500 mt-1">Aquí está el resumen del negocio en tiempo real.</p>
         </div>
-        <Button data-testid="dashboard-new-sale" onClick={() => navigate("/pos")} className="bg-blue-600 hover:bg-blue-700 gap-2 h-11">
+        <Button data-testid="dashboard-new-sale" onClick={() => navigate("/pos")} className="bg-brand hover:bg-brand-dark gap-2 h-11">
           <Sparkles className="w-4 h-4" /> Nueva venta
         </Button>
       </div>
@@ -133,15 +133,15 @@ export default function Dashboard() {
             <AreaChart data={stats.salesByDay}>
               <defs>
                 <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#1A56DB" stopOpacity={0.35}/>
-                  <stop offset="100%" stopColor="#1A56DB" stopOpacity={0}/>
+                  <stop offset="0%" stopColor="#7B1FA2" stopOpacity={0.35}/>
+                  <stop offset="100%" stopColor="#7B1FA2" stopOpacity={0}/>
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis dataKey="day" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
               <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `S/${v}`} />
               <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }} formatter={(v) => [`S/ ${v}`, "Ventas"]} />
-              <Area type="monotone" dataKey="total" stroke="#1A56DB" strokeWidth={2.5} fill="url(#colorSales)" />
+              <Area type="monotone" dataKey="total" stroke="#7B1FA2" strokeWidth={2.5} fill="url(#colorSales)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -178,7 +178,7 @@ export default function Dashboard() {
               <XAxis type="number" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
               <YAxis dataKey="name" type="category" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} width={120} />
               <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e2e8f0", fontSize: 12 }} />
-              <Bar dataKey="qty" fill="#1A56DB" radius={[0, 6, 6, 0]} />
+              <Bar dataKey="qty" fill="#7B1FA2" radius={[0, 6, 6, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -205,7 +205,7 @@ export default function Dashboard() {
             <h3 className="font-heading font-bold text-slate-900">Órdenes recientes</h3>
             <p className="text-xs text-slate-500 mt-0.5">Últimas 6 órdenes registradas</p>
           </div>
-          <button data-testid="view-all-orders" onClick={() => navigate("/ordenes")} className="text-sm font-semibold text-blue-600 hover:text-blue-700">Ver todas →</button>
+          <button data-testid="view-all-orders" onClick={() => navigate("/ordenes")} className="text-sm font-semibold text-brand hover:text-brand-dark">Ver todas →</button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -223,7 +223,7 @@ export default function Dashboard() {
             <tbody>
               {recentOrders.map(o => (
                 <tr key={o.id} className="border-t border-slate-100 hover:bg-slate-50/60 cursor-pointer" onClick={() => navigate("/ordenes")}>
-                  <td className="px-6 py-3.5"><span className="font-mono text-sm font-semibold text-blue-600">{o.number}</span></td>
+                  <td className="px-6 py-3.5"><span className="font-mono text-sm font-semibold text-brand">{o.number}</span></td>
                   <td className="px-6 py-3.5 text-sm text-slate-700">{o.customerName}</td>
                   <td className="px-6 py-3.5 text-sm text-slate-600">{fmtDate(o.createdAt)}</td>
                   <td className="px-6 py-3.5 text-sm text-slate-600">{o.items.length} servicios</td>

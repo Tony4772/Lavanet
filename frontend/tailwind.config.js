@@ -15,6 +15,14 @@ module.exports = {
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+        brand: {
+          DEFAULT: '#7B1FA2',
+          soft: '#F3E5F5',
+          light: '#CE93D8',
+          muted: '#A383B9',
+          dark: '#4A148C',
+          ink: '#000000',
+        },
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))'

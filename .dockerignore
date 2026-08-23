@@ -1,0 +1,16 @@
+**/node_modules
+**/build
+.git
+.github
+.vercel
+.emergent
+**/.env
+**/.env.*
+!**/.env.example
+*.md
+*.log
+.DS_Store
+Thumbs.db
+memory
+canvases
+frontend/env.txt

@@ -43,7 +43,7 @@ export default function Entregas() {
                 const cust = data.customers.find(c => c.id === o.customerId);
                 return (
                   <tr key={o.id} className="border-t border-slate-100 hover:bg-slate-50/60">
-                    <td className="px-6 py-3.5"><span className="font-mono text-sm font-semibold text-blue-600">{o.number}</span></td>
+                    <td className="px-6 py-3.5"><span className="font-mono text-sm font-semibold text-brand">{o.number}</span></td>
                     <td className="px-6 py-3.5 text-sm">{o.customerName}</td>
                     <td className="px-6 py-3.5 text-sm text-slate-600"><span className="inline-flex items-center gap-1"><Phone className="w-3 h-3" />{cust?.phone || "-"}</span></td>
                     <td className="px-6 py-3.5 text-sm text-slate-600">{fmtDate(o.promisedAt)}</td>
@@ -91,7 +91,7 @@ export default function Entregas() {
             <tbody>
               {delivered.map(o => (
                 <tr key={o.id} className="border-t border-slate-100">
-                  <td className="px-6 py-3.5"><span className="font-mono text-sm font-semibold text-blue-600">{o.number}</span></td>
+                  <td className="px-6 py-3.5"><span className="font-mono text-sm font-semibold text-brand">{o.number}</span></td>
                   <td className="px-6 py-3.5 text-sm">{o.customerName}</td>
                   <td className="px-6 py-3.5 text-sm text-slate-600">{fmtDate(o.timeline[o.timeline.length - 1]?.at, true)}</td>
                   <td className="px-6 py-3.5 text-sm text-right font-semibold">{fmtMoney(o.total, currency)}</td>
@@ -108,7 +108,7 @@ export default function Entregas() {
           <DialogHeader><DialogTitle>¿Confirmar entrega de esta orden?</DialogTitle></DialogHeader>
           {confirm && (
             <div className="space-y-2 py-2">
-              <div className="flex justify-between text-sm"><span className="text-slate-500">Orden</span><span className="font-mono font-semibold text-blue-600">{confirm.number}</span></div>
+              <div className="flex justify-between text-sm"><span className="text-slate-500">Orden</span><span className="font-mono font-semibold text-brand">{confirm.number}</span></div>
               <div className="flex justify-between text-sm"><span className="text-slate-500">Cliente</span><span className="font-semibold">{confirm.customerName}</span></div>
               <div className="flex justify-between text-sm"><span className="text-slate-500">Total</span><span className="font-semibold">{fmtMoney(confirm.total, currency)}</span></div>
               {!confirm.paid && <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900 mt-2">⚠️ Esta orden aún no está marcada como pagada.</div>}
