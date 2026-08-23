@@ -51,6 +51,34 @@ code {
         --radius: 0.5rem;
         --sidebar-bg: 222 47% 11%;
     }
+
+    .dark {
+        --background: 222 47% 7%;
+        --foreground: 210 40% 98%;
+        --card: 222 47% 11%;
+        --card-foreground: 210 40% 98%;
+        --popover: 222 47% 11%;
+        --popover-foreground: 210 40% 98%;
+        --primary: 217 91% 60%;
+        --primary-foreground: 222 47% 7%;
+        --secondary: 217 33% 17%;
+        --secondary-foreground: 210 40% 98%;
+        --muted: 217 33% 17%;
+        --muted-foreground: 215 20% 65%;
+        --accent: 217 33% 17%;
+        --accent-foreground: 210 40% 98%;
+        --destructive: 0 63% 45%;
+        --destructive-foreground: 210 40% 98%;
+        --border: 217 33% 17%;
+        --input: 217 33% 17%;
+        --ring: 224 76% 48%;
+        --chart-1: 221 83% 53%;
+        --chart-2: 152 69% 41%;
+        --chart-3: 38 92% 50%;
+        --chart-4: 262 83% 58%;
+        --chart-5: 349 89% 52%;
+        --sidebar-bg: 222 47% 6%;
+    }
 }
 
 @layer base {
@@ -64,6 +92,8 @@ code {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: hsl(215 20% 80%); border-radius: 8px; }
 ::-webkit-scrollbar-thumb:hover { background: hsl(215 20% 65%); }
+.dark ::-webkit-scrollbar-thumb { background: hsl(215 16% 35%); }
+.dark ::-webkit-scrollbar-thumb:hover { background: hsl(215 16% 45%); }
 
 /* Print styles */
 @media print {

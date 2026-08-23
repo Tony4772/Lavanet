@@ -86,7 +86,6 @@ export default function Configuracion() {
           <TabsTrigger value="statuses" data-testid="tab-statuses">Estados</TabsTrigger>
           <TabsTrigger value="notifications" data-testid="tab-notifications">Notificaciones</TabsTrigger>
           <TabsTrigger value="report" data-testid="tab-report">Reporte diario</TabsTrigger>
-          <TabsTrigger value="appearance" data-testid="tab-appearance">Apariencia</TabsTrigger>
         </TabsList>
 
         <TabsContent value="business" className="mt-4">
@@ -212,22 +211,6 @@ export default function Configuracion() {
                     <span className="font-semibold">{fmtMoney(v, currency)}</span>
                   </div>
                 ))}
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="appearance" className="mt-4">
-          <div className="bg-white border border-slate-200 rounded-xl p-6 max-w-xl">
-            <div className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-3">Tema visual</div>
-            <div className="flex flex-wrap gap-3">
-              <div className="border-2 border-blue-600 rounded-lg p-4 cursor-pointer">
-                <div className="w-32 h-16 rounded bg-gradient-to-br from-blue-600 to-blue-800"></div>
-                <div className="text-xs font-semibold text-slate-800 mt-2">Azul (por defecto)</div>
-              </div>
-              <div className="border border-slate-200 rounded-lg p-4 cursor-pointer opacity-40">
-                <div className="w-32 h-16 rounded bg-gradient-to-br from-slate-700 to-slate-900"></div>
-                <div className="text-xs font-semibold text-slate-800 mt-2">Oscuro (próximo)</div>
               </div>
             </div>
           </div>

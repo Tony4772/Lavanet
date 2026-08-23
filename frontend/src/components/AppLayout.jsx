@@ -13,6 +13,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
+import ThemeToggle from "./ThemeToggle";
 
 const NAV = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, testId: "nav-dashboard" },
@@ -136,7 +137,7 @@ export default function AppLayout() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
       <aside className="hidden lg:flex fixed inset-y-0 left-0 w-64 bg-slate-900 flex-col z-40">
         <SidebarContent />
       </aside>
@@ -161,13 +162,13 @@ export default function AppLayout() {
       )}
 
       <div className="lg:ml-64">
-        <header className="sticky top-0 z-30 bg-white border-b border-slate-200 h-16 flex items-center px-4 lg:px-8 gap-4">
+        <header className="sticky top-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 h-16 flex items-center px-4 lg:px-8 gap-4">
           <button
             className="lg:hidden"
             data-testid="sidebar-open"
             onClick={() => setMobileOpen(true)}
           >
-            <Menu className="w-5 h-5 text-slate-600" />
+            <Menu className="w-5 h-5 text-slate-600 dark:text-slate-300" />
           </button>
 
           <Popover open={q.trim().length > 0} onOpenChange={(o) => !o && setQ("")}>
@@ -179,7 +180,7 @@ export default function AppLayout() {
                   placeholder="Buscar órdenes, clientes, servicios..."
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  className="pl-9 h-10 bg-slate-50 border-slate-200 focus-visible:ring-blue-500"
+                  className="pl-9 h-10 bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus-visible:ring-blue-500"
                 />
               </div>
             </PopoverTrigger>
@@ -192,13 +193,13 @@ export default function AppLayout() {
                     <button
                       key={`${r.type}-${r.label}-${i}`}
                       data-testid={`search-result-${i}`}
-                      className="w-full text-left px-4 py-2 hover:bg-slate-50 flex items-center justify-between text-sm"
+                      className="w-full text-left px-4 py-2 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between text-sm"
                       onClick={() => {
                         navigate(r.to);
                         setQ("");
                       }}
                     >
-                      <span className="text-slate-700">{r.label}</span>
+                      <span className="text-slate-700 dark:text-slate-200">{r.label}</span>
                       <span className="text-[10px] uppercase tracking-wider text-slate-400">
                         {r.type}
                       </span>
@@ -220,11 +221,13 @@ export default function AppLayout() {
               </Button>
             )}
 
+            <ThemeToggle />
+
             <Popover onOpenChange={(o) => o && markNotificationsRead()}>
               <PopoverTrigger asChild>
                 <button
                   data-testid="notifications-btn"
-                  className="relative p-2 rounded-md hover:bg-slate-100 text-slate-600"
+                  className="relative p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300"
                 >
                   <Bell className="w-5 h-5" />
                   {unread > 0 && (
@@ -252,7 +255,7 @@ export default function AppLayout() {
               </PopoverContent>
             </Popover>
 
-            <div className="hidden sm:block text-xs text-slate-500 max-w-[140px] truncate" title={businessName}>
+            <div className="hidden sm:block text-xs text-slate-500 dark:text-slate-400 max-w-[140px] truncate" title={businessName}>
               {businessName}
             </div>
 
@@ -260,7 +263,7 @@ export default function AppLayout() {
               <DropdownMenuTrigger asChild>
                 <button
                   data-testid="profile-menu"
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
                 >
                   <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-semibold">
                     {(currentUser?.name || "U")
