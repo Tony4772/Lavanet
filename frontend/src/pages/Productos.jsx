@@ -6,6 +6,13 @@ import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
+import {
+  decimalInputValue,
+  parseDecimalInput,
+  parseIntegerInput,
+  sanitizeDecimalInput,
+  sanitizeIntegerInput,
+} from "../lib/utils";
 
 export default function Productos() {
   const { data, updateCollection } = useApp();
@@ -16,8 +23,13 @@ export default function Productos() {
 
   const save = () => {
     if (!editing.name.trim() || !editing.sku.trim()) { toast.error("Nombre y SKU son requeridos"); return; }
-    if (editing.id) { updateCollection("products", prev => prev.map(p => p.id === editing.id ? editing : p)); toast.success("Producto actualizado"); }
-    else { updateCollection("products", prev => [{ ...editing, id: `p${Date.now()}`, active: true }, ...prev]); toast.success("Producto creado"); }
+    const price = parseDecimalInput(editing.price);
+    const stock = parseIntegerInput(editing.stock);
+    const minStock = parseIntegerInput(editing.minStock);
+    if (price < 0 || stock < 0 || minStock < 0) { toast.error("Precio o stock inválido"); return; }
+    const payload = { ...editing, price, stock, minStock };
+    if (editing.id) { updateCollection("products", prev => prev.map(p => p.id === editing.id ? payload : p)); toast.success("Producto actualizado"); }
+    else { updateCollection("products", prev => [{ ...payload, id: `p${Date.now()}`, active: true }, ...prev]); toast.success("Producto creado"); }
     setEditing(null);
   };
   const remove = (id) => { if (!window.confirm("¿Eliminar?")) return; updateCollection("products", prev => prev.filter(p => p.id !== id)); toast.success("Producto eliminado"); };
@@ -26,7 +38,7 @@ export default function Productos() {
     <div data-testid="productos-page" className="space-y-6 animate-fadeInUp">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div><h1 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">Productos</h1><p className="text-slate-500 mt-1">{filtered.length} productos</p></div>
-        <Button data-testid="producto-new" onClick={() => setEditing({ name: "", sku: "", category: "Detergentes", price: 0, stock: 0, minStock: 5 })} className="bg-brand hover:bg-brand-dark gap-2 h-10"><Plus className="w-4 h-4" /> Nuevo producto</Button>
+        <Button data-testid="producto-new" onClick={() => setEditing({ name: "", sku: "", category: "Detergentes", price: "", stock: "", minStock: "5" })} className="bg-brand hover:bg-brand-dark gap-2 h-10"><Plus className="w-4 h-4" /> Nuevo producto</Button>
       </div>
       <div className="bg-white border border-slate-200 rounded-xl p-4"><div className="relative"><Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" /><Input placeholder="Buscar por nombre o SKU..." value={q} onChange={(e) => setQ(e.target.value)} className="pl-9 h-10 max-w-md" /></div></div>
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
@@ -57,7 +69,7 @@ export default function Productos() {
                     </td>
                     <td className="px-6 py-3.5 text-right">
                       <div className="inline-flex gap-1">
-                        <button data-testid={`producto-edit-${p.id}`} onClick={() => setEditing(p)} className="p-1.5 rounded hover:bg-slate-100 text-slate-600"><Edit2 className="w-4 h-4" /></button>
+                        <button data-testid={`producto-edit-${p.id}`} onClick={() => setEditing({ ...p, price: decimalInputValue(p.price), stock: String(p.stock), minStock: String(p.minStock) })} className="p-1.5 rounded hover:bg-slate-100 text-slate-600"><Edit2 className="w-4 h-4" /></button>
                         <button data-testid={`producto-delete-${p.id}`} onClick={() => remove(p.id)} className="p-1.5 rounded hover:bg-slate-100 text-red-600"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
@@ -79,9 +91,9 @@ export default function Productos() {
                 <div><Label>Categoría</Label><Input value={editing.category} onChange={(e) => setEditing(v => ({ ...v, category: e.target.value }))} /></div>
               </div>
               <div className="grid grid-cols-3 gap-2">
-                <div><Label>Precio</Label><Input type="number" step="0.5" value={editing.price} onChange={(e) => setEditing(v => ({ ...v, price: Number(e.target.value) }))} /></div>
-                <div><Label>Stock</Label><Input type="number" value={editing.stock} onChange={(e) => setEditing(v => ({ ...v, stock: Number(e.target.value) }))} /></div>
-                <div><Label>Mín</Label><Input type="number" value={editing.minStock} onChange={(e) => setEditing(v => ({ ...v, minStock: Number(e.target.value) }))} /></div>
+                <div><Label>Precio</Label><Input type="text" inputMode="decimal" placeholder="0.00" value={editing.price} onChange={(e) => { const next = sanitizeDecimalInput(e.target.value); if (next !== null) setEditing(v => ({ ...v, price: next })); }} /></div>
+                <div><Label>Stock</Label><Input type="text" inputMode="numeric" placeholder="0" value={editing.stock} onChange={(e) => { const next = sanitizeIntegerInput(e.target.value); if (next !== null) setEditing(v => ({ ...v, stock: next })); }} /></div>
+                <div><Label>Mín</Label><Input type="text" inputMode="numeric" placeholder="0" value={editing.minStock} onChange={(e) => { const next = sanitizeIntegerInput(e.target.value); if (next !== null) setEditing(v => ({ ...v, minStock: next })); }} /></div>
               </div>
             </div>
           )}

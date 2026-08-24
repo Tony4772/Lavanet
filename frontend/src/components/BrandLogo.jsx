@@ -6,8 +6,8 @@ import { cn } from "../lib/utils";
  */
 const SRC = {
   square: "/lavanet-logo-transparent.png",
-  wideLg: "/lavanet-logo-wide-120x80.png",
-  wideSm: "/lavanet-logo-wide-100x70.png",
+  wideDesktop: "/escritorio.svg",
+  wideMobile: "/lavanet-logo-wide.svg",
 };
 
 const SIZE_CLASS = {
@@ -23,15 +23,15 @@ const SIZE_CLASS = {
   hero: "w-[min(100%,340px)] h-auto",
   /** Login / registro panel izquierdo escritorio (cuadrado, legacy) */
   heroDesktop: "w-[400px] max-w-full h-auto",
-  /** Login / landing escritorio — asset 120×80 */
-  heroWide: "h-[90px] w-auto max-w-full mx-auto",
-  /** Login / landing móvil — asset 100×70 */
-  heroWideMobile: "h-[120px] w-auto max-w-full mx-auto",
+  /** Login / landing escritorio — SVG escritorio.svg, 120px alto */
+  heroWide: "h-[160px] w-auto max-w-full mx-auto",
+  /** Login / landing móvil — SVG vectorial, 200px alto */
+  heroWideMobile: "h-[200px] w-auto max-w-full mx-auto",
 };
 
 const SIZE_SRC = {
-  heroWide: SRC.wideLg,
-  heroWideMobile: SRC.wideSm,
+  heroWide: SRC.wideDesktop,
+  heroWideMobile: SRC.wideMobile,
 };
 
 export default function BrandLogo({

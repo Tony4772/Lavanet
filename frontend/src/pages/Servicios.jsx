@@ -9,6 +9,7 @@ import { Label } from "../components/ui/label";
 import { Switch } from "../components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { decimalInputValue, parseDecimalInput, sanitizeDecimalInput } from "../lib/utils";
 
 export default function Servicios() {
   const { data, updateCollection } = useApp();
@@ -20,11 +21,14 @@ export default function Servicios() {
 
   const save = () => {
     if (!editing.name.trim() || !editing.category) { toast.error("Nombre y categoría son requeridos"); return; }
+    const price = parseDecimalInput(editing.price);
+    if (price < 0) { toast.error("Precio inválido"); return; }
+    const payload = { ...editing, price };
     if (editing.id) {
-      updateCollection("services", prev => prev.map(s => s.id === editing.id ? editing : s));
+      updateCollection("services", prev => prev.map(s => s.id === editing.id ? payload : s));
       toast.success("Servicio actualizado");
     } else {
-      updateCollection("services", prev => [{ ...editing, id: `s${Date.now()}`, active: true }, ...prev]);
+      updateCollection("services", prev => [{ ...payload, id: `s${Date.now()}`, active: true }, ...prev]);
       toast.success("Servicio creado");
     }
     setEditing(null);
@@ -43,7 +47,7 @@ export default function Servicios() {
           <h1 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">Servicios</h1>
           <p className="text-slate-500 mt-1">{filtered.length} servicios en el catálogo</p>
         </div>
-        <Button data-testid="servicio-new" onClick={() => setEditing({ name: "", category: "Lavado", description: "", price: 0, unit: "kg", eta: "24h", active: true })} className="bg-brand hover:bg-brand-dark gap-2 h-10">
+        <Button data-testid="servicio-new" onClick={() => setEditing({ name: "", category: "Lavado", description: "", price: "", unit: "kg", eta: "24h", active: true })} className="bg-brand hover:bg-brand-dark gap-2 h-10">
           <Plus className="w-4 h-4" /> Nuevo servicio
         </Button>
       </div>
@@ -65,7 +69,7 @@ export default function Servicios() {
             <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-100">
               <div className="font-heading font-bold text-lg text-slate-900">{fmtMoney(s.price, currency)}<span className="text-xs text-slate-500 font-normal">/{s.unit}</span></div>
               <div className="flex gap-1">
-                <button data-testid={`servicio-edit-${s.id}`} onClick={() => setEditing(s)} className="p-1.5 rounded hover:bg-slate-100 text-slate-600"><Edit2 className="w-4 h-4" /></button>
+                <button data-testid={`servicio-edit-${s.id}`} onClick={() => setEditing({ ...s, price: decimalInputValue(s.price) })} className="p-1.5 rounded hover:bg-slate-100 text-slate-600"><Edit2 className="w-4 h-4" /></button>
                 <button data-testid={`servicio-delete-${s.id}`} onClick={() => remove(s.id)} className="p-1.5 rounded hover:bg-slate-100 text-red-600"><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>
@@ -87,7 +91,7 @@ export default function Servicios() {
               </div>
               <div><Label>Descripción</Label><Input value={editing.description} onChange={(e) => setEditing(v => ({ ...v, description: e.target.value }))} /></div>
               <div className="grid grid-cols-3 gap-2">
-                <div><Label>Precio</Label><Input data-testid="edit-servicio-price" type="number" step="0.5" value={editing.price} onChange={(e) => setEditing(v => ({ ...v, price: Number(e.target.value) }))} /></div>
+                <div><Label>Precio</Label><Input data-testid="edit-servicio-price" type="text" inputMode="decimal" placeholder="0.00" value={editing.price} onChange={(e) => { const next = sanitizeDecimalInput(e.target.value); if (next !== null) setEditing(v => ({ ...v, price: next })); }} /></div>
                 <div><Label>Unidad</Label><Input value={editing.unit} onChange={(e) => setEditing(v => ({ ...v, unit: e.target.value }))} /></div>
                 <div><Label>Tiempo</Label><Input value={editing.eta} onChange={(e) => setEditing(v => ({ ...v, eta: e.target.value }))} /></div>
               </div>
