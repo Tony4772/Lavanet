@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { User, Lock, ArrowRight, Play, MessageCircle } from "lucide-react";
 import { useApp } from "../context/AppContext";
 import { api, hasApiBackend } from "../lib/api";
 import BrandLogo from "../components/BrandLogo";
-import SiteFooter from "../components/SiteFooter";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Label } from "../components/ui/label";
@@ -57,107 +56,107 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen lg:h-svh lg:overflow-hidden bg-slate-50 flex flex-col">
-      <div className="flex-1 min-h-0 grid lg:grid-cols-2">
-      <div className="hidden lg:flex relative bg-black items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-black via-black to-brand-dark/40" />
-        <div className="relative z-10 px-12 max-w-lg w-full text-center">
-          <div className="mb-8 flex justify-center">
-            <BrandLogo size="heroWide" />
-          </div>
-          <h1 className="text-white font-heading text-4xl xl:text-5xl font-extrabold leading-tight tracking-tight">
-            La gestión de tu lavandería,
-            <br />
-            <span className="text-brand-light">simple y poderosa.</span>
-          </h1>
-          <p className="text-brand-muted mt-6 text-lg leading-relaxed">
-            Órdenes, POS, caja, inventario y reportes para lavanderías modernas.
-          </p>
+    <div className="min-h-screen lg:h-svh lg:overflow-hidden bg-slate-50">
+      <div className="min-h-screen lg:h-svh grid lg:grid-cols-2">
+        <div className="hidden lg:block relative overflow-hidden">
+          <img
+            src="/login-hero-bg.png"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover object-left"
+          />
         </div>
-      </div>
 
-      <div className="flex items-center justify-center p-6 lg:p-12">
-        <div className="w-full max-w-md">
-          <div className="lg:hidden mb-8 flex justify-center">
-            <BrandLogo size="heroWideMobile" />
-          </div>
+        <div className="flex flex-col min-h-screen lg:h-svh">
+          <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+            <div className="w-full max-w-md">
+              <div className="lg:hidden mb-8 flex justify-center">
+                <BrandLogo size="heroWideMobile" />
+              </div>
 
-          <h2 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">
-            Iniciar sesión
-          </h2>
-          <p className="text-slate-500 mt-2 text-sm leading-relaxed">
-            ¿Quieres contratar lavanet?{" "}
-            <a
-              href={`https://wa.me/${WHATSAPP}?text=${WHATSAPP_MSG}`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-brand font-semibold hover:underline inline-flex items-center gap-1"
-            >
-              <MessageCircle className="w-3.5 h-3.5" /> WhatsApp 906 591 037
-            </a>
-          </p>
+              <h2 className="font-heading text-3xl font-extrabold text-slate-900 tracking-tight">
+                Iniciar sesión
+              </h2>
+              <p className="text-slate-500 mt-2 text-sm leading-relaxed">
+                ¿Quieres contratar lavanet?{" "}
+                <a
+                  href={`https://wa.me/${WHATSAPP}?text=${WHATSAPP_MSG}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-brand font-semibold hover:underline inline-flex items-center gap-1"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" /> WhatsApp 906 591 037
+                </a>
+              </p>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-            <div>
-              <Label className="text-slate-700 text-sm">Usuario</Label>
-              <div className="relative mt-1.5">
-                <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <Input
-                  data-testid="login-username"
-                  className="pl-9 h-11"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
+              <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+                <div>
+                  <Label className="text-slate-700 text-sm">Usuario</Label>
+                  <div className="relative mt-1.5">
+                    <User className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      data-testid="login-username"
+                      className="pl-9 h-11"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-slate-700 text-sm">Contraseña</Label>
+                  <div className="relative mt-1.5">
+                    <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Input
+                      data-testid="login-password"
+                      type="password"
+                      className="pl-9 h-11"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+                <Button
+                  data-testid="login-submit"
+                  type="submit"
+                  disabled={loading}
+                  className="w-full h-11 gap-2 font-semibold"
+                >
+                  {loading ? "Ingresando..." : (
+                    <>
+                      Entrar <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
+
+              <div className="mt-6 space-y-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={loading}
+                  onClick={enterDemo}
+                  className="w-full h-11 gap-2 border-brand text-brand hover:bg-brand-soft"
+                >
+                  <Play className="w-4 h-4" /> Probar demo
+                </Button>
+                <p className="text-[11px] text-center text-slate-400">
+                  Cuenta demo compartida con datos de ejemplo. Para tu negocio, contrata por WhatsApp.
+                </p>
               </div>
             </div>
-            <div>
-              <Label className="text-slate-700 text-sm">Contraseña</Label>
-              <div className="relative mt-1.5">
-                <Lock className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <Input
-                  data-testid="login-password"
-                  type="password"
-                  className="pl-9 h-11"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-            <Button
-              data-testid="login-submit"
-              type="submit"
-              disabled={loading}
-              className="w-full h-11 gap-2 font-semibold"
-            >
-              {loading ? "Ingresando..." : (
-                <>
-                  Entrar <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </Button>
-          </form>
-
-          <div className="mt-6 space-y-3">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={loading}
-              onClick={enterDemo}
-              className="w-full h-11 gap-2 border-brand text-brand hover:bg-brand-soft"
-            >
-              <Play className="w-4 h-4" /> Probar demo
-            </Button>
-            <p className="text-[11px] text-center text-slate-400">
-              Cuenta demo compartida con datos de ejemplo. Para tu negocio, contrata por WhatsApp.
-            </p>
           </div>
+
+          <nav className="shrink-0 px-6 lg:px-12 pb-6 flex flex-wrap justify-center gap-x-4 gap-y-1 text-xs text-slate-500">
+            <Link to="/terminos" className="hover:text-brand underline-offset-2 hover:underline">
+              Términos y condiciones
+            </Link>
+            <Link to="/privacidad" className="hover:text-brand underline-offset-2 hover:underline">
+              Política de privacidad
+            </Link>
+          </nav>
         </div>
       </div>
-      </div>
-
-      <SiteFooter />
     </div>
   );
 }
